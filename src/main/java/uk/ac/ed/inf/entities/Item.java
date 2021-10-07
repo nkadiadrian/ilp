@@ -1,4 +1,4 @@
-package uk.ac.ed.inf;
+package uk.ac.ed.inf.entities;
 
 public class Item {
     private String item;
@@ -13,16 +13,8 @@ public class Item {
         return item;
     }
 
-    public void setItem(String item) {
-        this.item = item;
-    }
-
     public Integer getPence() {
         return pence;
-    }
-
-    public void setPence(Integer pence) {
-        this.pence = pence;
     }
 }
 

@@ -1,55 +1,29 @@
 package uk.ac.ed.inf;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import uk.ac.ed.inf.clients.MenuWebsiteClient;
+import uk.ac.ed.inf.entities.Item;
+import uk.ac.ed.inf.entities.Shop;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 
 public class Menus {
-    private String machineName;
-    private String port;
-    private static HttpClient httpClient = HttpClient.newHttpClient();
+    public static final int DELIVERY_CHARGE = 50;
+    private static MenuWebsiteClient menuClient;
 
     public Menus(String machineName, String port) {
-        this.machineName = machineName;
-        this.port = port;
+        menuClient = new MenuWebsiteClient(machineName, port);
     }
 
-    public int getDeliveryCost (String... orders) {
+    public int getDeliveryCost(String... orders) {
+        assert(orders.length > 0 & orders.length <= 4);
+        ArrayList<Shop> shops = menuClient.getAllShopsMenus();
 
-        HttpRequest request = HttpRequest.newBuilder()
-//                .uri(URI.create("http://localhost:9898/menus/menus.json"))
-                .uri(URI.create("http://" + machineName + ":" + port + "/menus/menus.json"))
-                .GET()
-                .build();
+        int menuCost = getMenuCost(shops, orders);
+        return DELIVERY_CHARGE + menuCost;
+    }
 
-        HttpResponse<String> response;
-        try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return 0;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return 0;
-        }
-
-        System.out.println(response.statusCode());
-        System.out.println(response.headers());
-        System.out.println(response.body());
-
-        Type shopsType = new TypeToken<ArrayList<Shop>>() {}.getType();
-        ArrayList<Shop> shops = new Gson().fromJson(response.body(), shopsType);
-        response.body();
-
+    private int getMenuCost(ArrayList<Shop> shops, String[] orders) {
         int menuCost = 0;
-
         for (String order : orders) {
             for (Shop shop : shops) {
                 for (Item item : shop.getMenu()) {
@@ -60,7 +34,6 @@ public class Menus {
                 }
             }
         }
-
-        return 50 + menuCost;
+        return menuCost;
     }
 }
