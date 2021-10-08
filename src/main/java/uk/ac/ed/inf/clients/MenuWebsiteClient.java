@@ -14,19 +14,39 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 
+/**
+ * The singular client used to access the data on the website. This contains the httpClient used to connect to the website
+ * The class also contains the methods used to extract and serialise specific data files from said website
+ */
 public class MenuWebsiteClient {
+    // The address of the file containing the list of shops with their respective menus
     public static final String SHOPS_MENUS_DIRECTORY = "/menus/menus.json";
+
+    private static final HttpClient httpClient = HttpClient.newHttpClient();
     private String machineName;
     private String port;
     private String serverAddress;
-    private static HttpClient httpClient = HttpClient.newHttpClient();
 
+    /**
+     * The initialiser for the website client stores the server address as a single instance variable
+     * to be used elsewhere in data fetching
+     *
+     * @param machineName The name of the machine the website is being run on
+     * @param port        The port number the website is being run on
+     */
     public MenuWebsiteClient(String machineName, String port) {
         this.machineName = machineName;
         this.port = port;
-        this.serverAddress = "http://" + machineName + ":" + port;
+        setServerAddress();
     }
 
+    /**
+     * This acts as a general function for all get requests. It attempts to parse all requests to get data
+     * from the website server directories and returns a serialisable String object to be used elsewhere.
+     *
+     * @param directory the location and file name from which the requested data is wanted
+     * @return a string containing the raw data extracted from the specified location, or an empty string if none can be extracted
+     */
     public String GET(String directory) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -37,7 +57,7 @@ public class MenuWebsiteClient {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             return response.body();
         } catch (ConnectException e) {
-            System.err.println("A connection to the website server with machine name: " + machineName + ", and port: " + port + ", could not be established");
+            System.err.println("A connection to the website server with machine name: " + getMachineName() + ", and port: " + getPort() + ", could not be established");
             System.exit(1);
         } catch (MalformedURLException e) {
             System.err.println("The URL is malformed, can't access resource");
@@ -49,10 +69,61 @@ public class MenuWebsiteClient {
         return "";
     }
 
+    /**
+     * Uses the GET method to obtain the list of shops and their menus and then serialises the response from the website
+     * This provides the list of shops and therefore menu items that can be used to calculate order prices
+     *
+     * @return a list of all the shops and their menus available from the website.
+     * An empty list is returned if no data is fetched.
+     */
     public ArrayList<Shop> getAllShopsMenus() {
         String response = GET(SHOPS_MENUS_DIRECTORY);
         Type shopsType = new TypeToken<ArrayList<Shop>>() {
         }.getType();
         return new Gson().fromJson(response, shopsType);
     }
+
+    /**
+     * @return the name of the machine used for connecting to the hosting website server
+     */
+    public String getMachineName() {
+        return machineName;
+    }
+
+    /**
+     * Sets the machine name but also adjusts the serverAddress to use the new machine name
+     *
+     * @param machineName the name of the machine used for connecting to the hosting website server
+     */
+    public void setMachineName(String machineName) {
+        this.machineName = machineName;
+        setServerAddress();
+    }
+
+    /**
+     * @return the port on the machine used for connecting to the hosting website server
+     */
+    public String getPort() {
+        return port;
+    }
+
+    /**
+     * Sets the port name but also adjusts the serverAddress to use the new port specified
+     *
+     * @param port the port on the machine used for connecting to the hosting website server
+     */
+    public void setPort(String port) {
+        this.port = port;
+        setServerAddress();
+    }
+
+    /**
+     * Helper method that uses the current machineName and port to set a singular variable
+     * storing the full server address to be used to elsewhere
+     */
+    private void setServerAddress() {
+        this.serverAddress = "http://" + machineName + ":" + port;
+    }
+
+
 }
