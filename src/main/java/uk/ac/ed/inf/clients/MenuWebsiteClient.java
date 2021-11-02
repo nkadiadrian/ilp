@@ -2,6 +2,9 @@ package uk.ac.ed.inf.clients;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.mapbox.geojson.FeatureCollection;
+import uk.ac.ed.inf.LongLat;
+import uk.ac.ed.inf.entities.Coordinates;
 import uk.ac.ed.inf.entities.Shop;
 
 import java.io.IOException;
@@ -23,6 +26,7 @@ public class MenuWebsiteClient {
     public static final String SHOPS_MENUS_DIRECTORY = "/menus/menus.json";
 
     private static final HttpClient httpClient = HttpClient.newHttpClient();
+    private static final Gson gson = new Gson();
     private String machineName;
     private String port;
     private String serverAddress;
@@ -80,7 +84,19 @@ public class MenuWebsiteClient {
         String response = GET(SHOPS_MENUS_DIRECTORY);
         Type shopsType = new TypeToken<ArrayList<Shop>>() {
         }.getType();
-        return new Gson().fromJson(response, shopsType);
+        return gson.fromJson(response, shopsType);
+    }
+
+    public FeatureCollection getNoFlyZone() {
+        String response = GET("/buildings/no-fly-zones.geojson");
+        return FeatureCollection.fromJson(response);
+    }
+
+    public LongLat getLongLatFromLocationWord(String word) {
+        String wordDirectory = word.replace('.', '/');
+        String response = GET("/words/" + wordDirectory + "/details.json");
+        Coordinates coordinates = gson.fromJson(response, Coordinates.class);
+        return new LongLat(coordinates.getLng(), coordinates.getLat());
     }
 
     /**
@@ -124,6 +140,4 @@ public class MenuWebsiteClient {
     private void setServerAddress() {
         this.serverAddress = "http://" + machineName + ":" + port;
     }
-
-
 }

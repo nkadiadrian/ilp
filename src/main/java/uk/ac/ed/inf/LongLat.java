@@ -95,4 +95,8 @@ public class LongLat {
             return new LongLat(this.longitude + (DRONE_MOVE_LENGTH * Math.cos(angleInRadians)), this.latitude + (DRONE_MOVE_LENGTH * Math.sin(angleInRadians)));
         }
     }
+    
+    public void findPath( LongLat from, LongLat to) {
+
+    }
 }
