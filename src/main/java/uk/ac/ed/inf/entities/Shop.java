@@ -22,6 +22,14 @@ public class Shop { //TODO: PARSE THIS AS HASHMAP INSTEAD
         this.menu = menu;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
     /**
      * @return the menu of the given shop
      */

@@ -2,10 +2,14 @@ package uk.ac.ed.inf.clients;
 
 import uk.ac.ed.inf.LongLat;
 import uk.ac.ed.inf.Menus;
+import uk.ac.ed.inf.Move;
+import uk.ac.ed.inf.entities.Item;
 import uk.ac.ed.inf.entities.Order;
 
 import java.sql.*;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class DatabaseClient {
     public static final String DATABASE_NAME = "/derbyDB";
@@ -41,14 +45,17 @@ public class DatabaseClient {
             while (rs.next()) {
                 String orderNo = rs.getString("ORDERNO");
                 if (!orders.containsKey(orderNo)) {
-                    LongLat deliverTo = Menus.getMenuClient().getLongLatFromLocationWord(rs.getString("DELIVERTO"));
-                    System.out.println(deliverTo);
-                    orders.put(orderNo, new Order(orderNo, deliverTo));
+                    String whatThreeWordsDeliverTo = rs.getString("DELIVERTO");
+                    LongLat deliverTo = Menus.getMenuClient().getLongLatFromLocationWord(whatThreeWordsDeliverTo);
+                    orders.put(orderNo, new Order(orderNo, deliverTo, whatThreeWordsDeliverTo));
                 }
-                orders.get(orderNo).addItem(rs.getString("ITEM"), new LongLat(1, 2)); // TODO: Add Item coordinate locations
+
+                String item = rs.getString("ITEM");
+                LongLat itemLocation = Menus.getMenuClient().getLongLatFromLocationWord(menus.getItemMap().get(item).getLocation());
+                orders.get(orderNo).addItem(item, itemLocation); // TODO: Add Item coordinate locations
             }
             for (Order order: orders.values()) {
-                order.setDeliveryCost(menus.getDeliveryCost(order.getItems().toArray(new String[4])));
+                order.setDeliveryCost(menus.getDeliveryCost(order.getItems()));
             }
         } catch (SQLException e) {
             System.err.println("Could not retrieve the order information");
@@ -91,6 +98,47 @@ public class DatabaseClient {
                     "toLatitude double)\n");
         } catch (SQLException e) {
             System.err.println("Error initialising the flightpath table");
+        }
+    }
+
+    public void writeAllDeliveriesToTable(List<Order> fulfilledDeliveries) {
+        try {
+            conn.setAutoCommit(false);
+            PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO deliveries (orderNo, deliveredTo, costInPence) VALUES (?,?,?)");
+            for (Order order: fulfilledDeliveries) {
+                preparedStatement.setString(1, order.getOrderNo());
+                preparedStatement.setString(2, order.getThreeWordsDeliverTo());
+                preparedStatement.setInt(3, order.getDeliveryCost());
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
+            conn.commit();
+            conn.setAutoCommit(true);
+        } catch (SQLException e) {
+            System.err.println("Error writing to the deliveries table");
+            System.err.println(e.getMessage());
+        }
+    }
+
+    public void writeAllMovesToTable(List<Move> moves) {
+        try {
+            conn.setAutoCommit(false);
+            PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO flightpath (orderNo, fromLongitude, fromLatitude, angle, toLongitude, toLatitude) VALUES (?,?,?,?,?,?)");
+            for (Move move: moves) {
+                preparedStatement.setString(1, move.getOrderNo());
+                preparedStatement.setDouble(2, move.getFromLongitude());
+                preparedStatement.setDouble(3, move.getFromLatitude());
+                preparedStatement.setInt(4, move.getAngle());
+                preparedStatement.setDouble(5, move.getToLongitude());
+                preparedStatement.setDouble(6, move.getToLatitude());
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
+            conn.commit();
+            conn.setAutoCommit(true);
+        } catch (SQLException e) {
+            System.err.println("Error writing to the flightpath table");
+            System.err.println(e.getMessage());
         }
     }
 

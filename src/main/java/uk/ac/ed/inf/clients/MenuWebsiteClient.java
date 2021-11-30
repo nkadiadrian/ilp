@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.mapbox.geojson.FeatureCollection;
 import uk.ac.ed.inf.LongLat;
 import uk.ac.ed.inf.entities.Coordinates;
+import uk.ac.ed.inf.entities.ThreeWordsDetails;
 import uk.ac.ed.inf.entities.Shop;
 
 import java.io.IOException;
@@ -15,8 +16,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.List;
 
 /**
  * The singular client used to access the data on the website. This contains the httpClient used to connect to the website
@@ -81,9 +81,9 @@ public class MenuWebsiteClient {
      * @return a list of all the shops and their menus available from the website.
      * An empty list is returned if no data is fetched.
      */
-    public ArrayList<Shop> getAllShopsMenus() { // TODO: Get this as hashmap instead
+    public List<Shop> getAllShopsMenus() { // TODO: Get this as hashmap instead
         String response = GET(SHOPS_MENUS_DIRECTORY);
-        Type shopsType = new TypeToken<ArrayList<Shop>>() {
+        Type shopsType = new TypeToken<List<Shop>>() {
         }.getType();
         return gson.fromJson(response, shopsType);
     }
@@ -96,9 +96,8 @@ public class MenuWebsiteClient {
     public LongLat getLongLatFromLocationWord(String word) {
         String wordDirectory = word.replace('.', '/');
         String response = GET("/words/" + wordDirectory + "/details.json");
-        System.out.println(response);
-        Coordinates coordinates = gson.fromJson(response, Coordinates.class);  // TODO: Fix Parsing
-        return new LongLat(coordinates.getLng(), coordinates.getLat());
+        ThreeWordsDetails threeWordsDetails = gson.fromJson(response, ThreeWordsDetails.class);  // TODO: Fix Parsing
+        return threeWordsDetails.getLongLat();
     }
 
     /**

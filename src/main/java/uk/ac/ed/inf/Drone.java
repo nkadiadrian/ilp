@@ -38,7 +38,7 @@ public class Drone {
         this.returningToStart = false;
         this.noFlyZone = noFlyZone;
         this.orderLocations = orderLocations;
-        this.currentDestination = this.orderLocations.get(0).getShopLocations().get(0);
+        this.currentDestination = this.orderLocations.get(0).getAllLocations().get(0);
         this.noFlyBoundaries = getNoFlyBoundaries();
         flightpathData.add(Point.fromLngLat(currentPosition.longitude, currentPosition.latitude));
     }
@@ -54,6 +54,7 @@ public class Drone {
             moveDrone(direction);
             // Check the stopping conditions
             if (this.moves == 0 || (currentPosition.closeTo(startPosition) && returningToStart)) {
+                System.out.println("HOME");
                 continueFlight = false;
             }
         }
@@ -72,6 +73,7 @@ public class Drone {
             currentOrderIndex++;
             currentLocationOrderIndex = 0;
             if (this.currentOrderIndex == orderLocations.size()) {
+                currentOrderIndex--; // TODO: Create a "HOME" order
                 returningToStart = true;
                 currentDestination = startPosition;
                 return;
@@ -80,7 +82,6 @@ public class Drone {
         }
 
         currentDestination = currOrderLocations.get(currentLocationOrderIndex);
-        return;
     }
 
     /*
@@ -93,6 +94,7 @@ public class Drone {
         if (moveIntersectsNoFlyZone(proposedNextPosition, this.currentPosition) || !proposedNextPosition.isConfined()) {
             angle = getNewAngleAnticlockwise(angle);
             moveDrone(angle);
+            System.out.println("TRIGGER");
         }
         // Check if the suggested move has been repeated within the last 5 moves
 //        else if (isRepeatedMove(proposedNextPoint, this.currentPosition.toPoint())) {
@@ -101,7 +103,8 @@ public class Drone {
 //        }
         // The move is a legal move for the drone
         else {
-            Move newMove = new Move(orderLocations.get(currentOrderIndex).getOrderNo(), angle, currentPosition, currentPosition.nextPosition(angle));
+            String orderNo = orderLocations.get(currentOrderIndex).getOrderNo();
+            Move newMove = new Move(orderNo, angle, currentPosition, currentPosition.nextPosition(angle));
             this.moves--;
             this.currentPosition = proposedNextPosition;
             route.add(newMove);
@@ -114,11 +117,7 @@ public class Drone {
             }
             if (currentPosition.closeTo(currentDestination)) {
                 setCurrentDestination();
-                moveDrone(LongLat.HOVERING_ANGLE);
-
-                // add the moves to the flightpath thing
-
-                // check if an order has finished and add to deliveries table thing
+//                moveDrone(LongLat.HOVERING_ANGLE);
             }
         }
     }
@@ -151,15 +150,13 @@ public class Drone {
      * Return true if the line formed by the move goes into any No-Fly Zone, false if not.
      */
     private boolean moveIntersectsNoFlyZone(LongLat newPosition, LongLat initialPosition) {
-        Line2D moveLine = new Line2D.Double(newPosition.getLongitude(), newPosition.getLatitude(),
-                initialPosition.getLongitude(), initialPosition.getLatitude());
+        Line2D moveLine = new Line2D.Double(initialPosition.getLongitude(), initialPosition.getLatitude(),
+                newPosition.getLongitude(), newPosition.getLatitude());
         // Loop through all boundaries of No-Fly Zones and check if the move intersects.
-        int iter = 0;
         for (Line2D boundary : this.noFlyBoundaries) {
             if (boundary.intersectsLine(moveLine)) {
                 return true;
             }
-            iter++;
         }
         return false;
     }
@@ -176,12 +173,10 @@ public class Drone {
             for (int i = 0; i < coordinateList.size() - 1; i++) {
                 var pointA = coordinateList.get(i);
                 var pointB = coordinateList.get(i + 1);
-                var line = new Line2D.Double(pointA.longitude(), pointB.longitude(), pointA.latitude(), pointB.latitude());
+                var line = new Line2D.Double(pointA.longitude(), pointA.latitude(), pointB.longitude(), pointB.latitude());
                 noFlyBoundaries.add(line);
             }
         }
         return noFlyBoundaries;
     }
-
-
 }

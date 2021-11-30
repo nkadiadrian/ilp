@@ -8,14 +8,16 @@ import java.util.Collections;
 public class Order {
     private String orderNo;
     private LongLat deliverTo;
+    private String threeWordsDeliverTo;
     private int deliveryCost;
     private ArrayList<LongLat> shopLocations = new ArrayList<>();
     private ArrayList<String> items;
     private boolean visitFirstShopFirst = true;
 
-    public Order(String orderNo, LongLat deliverTo) {
+    public Order(String orderNo, LongLat deliverTo, String threeWordsDeliverTo) {
         this.orderNo = orderNo;
         this.deliverTo = deliverTo;
+        this.threeWordsDeliverTo = threeWordsDeliverTo;
         this.items = new ArrayList<>();
     }
 
@@ -28,6 +30,18 @@ public class Order {
 
     public LongLat getDeliverTo() {
         return deliverTo;
+    }
+
+    public String getThreeWordsDeliverTo() {
+        return threeWordsDeliverTo;
+    }
+
+    public void setThreeWordsDeliverTo(String threeWordsDeliverTo) {
+        this.threeWordsDeliverTo = threeWordsDeliverTo;
+    }
+
+    public ArrayList<LongLat> getShopLocations() {
+        return shopLocations;
     }
 
     public void setDeliverTo(LongLat deliverTo) {
@@ -56,20 +70,6 @@ public class Order {
 
     public void setOrderNo(String orderNo) {
         this.orderNo = orderNo;
-    }
-
-    public ArrayList<LongLat> getShopLocations() {
-        if (this.visitFirstShopFirst || this.shopLocations.size() == 1) {
-            return shopLocations;
-        }
-        return swap(this.shopLocations);
-    }
-
-    public static ArrayList<LongLat> swap(ArrayList<LongLat> arr){
-        ArrayList<LongLat> reversedArr = new ArrayList<>();
-        reversedArr.add(arr.get(1));
-        reversedArr.add(arr.get(0));
-        return reversedArr;
     }
 
     public ArrayList<LongLat> getAllLocations(){

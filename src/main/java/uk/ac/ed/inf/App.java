@@ -51,5 +51,7 @@ public class App {
         } catch (IOException ex) {
             System.err.println(ex.getMessage());
         }
+        databaseClient.writeAllDeliveriesToTable(drone.fulfilledOrders);
+        databaseClient.writeAllMovesToTable(drone.route);
     }
 }

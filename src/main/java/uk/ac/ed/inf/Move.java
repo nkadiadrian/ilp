@@ -16,4 +16,28 @@ public class Move {
         this.toLongitude = toLocation.getLongitude();
         this.toLatitude = toLocation.getLatitude();
     }
+
+    public String getOrderNo() {
+        return orderNo;
+    }
+
+    public double getFromLongitude() {
+        return fromLongitude;
+    }
+
+    public double getFromLatitude() {
+        return fromLatitude;
+    }
+
+    public int getAngle() {
+        return angle;
+    }
+
+    public double getToLongitude() {
+        return toLongitude;
+    }
+
+    public double getToLatitude() {
+        return toLatitude;
+    }
 }

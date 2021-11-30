@@ -1,11 +1,14 @@
 package uk.ac.ed.inf.entities;
 
+import uk.ac.ed.inf.LongLat;
+
 /**
  * An entity class used by json to serialise the items in the menu of each shop from the json file on the website server
  */
 public class Item {
     private String item;
     private Integer pence;
+    private String location;
 
     /**
      * @param item  the name of the item
@@ -28,6 +31,14 @@ public class Item {
      */
     public Integer getPence() {
         return pence;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getLocation() {
+        return location;
     }
 }
 

@@ -5,13 +5,18 @@ import uk.ac.ed.inf.entities.Item;
 import uk.ac.ed.inf.entities.Shop;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A class for retrieving all menu items and calculating the price of delivering from the menus on the website
  */
-public class Menus { // TODO: USE HASHMAP FOR THESE
+public class Menus {
     public static final int DELIVERY_CHARGE = 50;
     private static MenuWebsiteClient menuClient;
+    private Map<String, Item> itemMap;
+
 
     /**
      * The constructor for the class initialises the menuClient using the parameters provided
@@ -22,6 +27,15 @@ public class Menus { // TODO: USE HASHMAP FOR THESE
      */
     public Menus(String machineName, String port) {
         menuClient = new MenuWebsiteClient(machineName, port);
+        List<Shop> shopList = menuClient.getAllShopsMenus();
+
+        itemMap = new HashMap<>();
+        for (Shop shop: shopList) {
+            for (Item item: shop.getMenu()) {
+                item.setLocation(shop.getLocation());
+                itemMap.put(item.getItem(), item);
+            }
+        }
     }
 
     /**
@@ -31,34 +45,31 @@ public class Menus { // TODO: USE HASHMAP FOR THESE
      * @param items A list of strings specifying the items ordered for the delivery
      * @return The total cost of the specified items along with their delivery price
      */
-    public int getDeliveryCost(String... items) {
-        assert (items.length > 0 & items.length <= 4);
-        ArrayList<Shop> shops = menuClient.getAllShopsMenus();
-        int menuCost = getMenuCost(shops, items);
+    public int getDeliveryCost(List<String> items) {
+        assert (items.size() > 0 & items.size() <= 4);
+        int menuCost = getMenuCost(itemMap, items);
         return DELIVERY_CHARGE + menuCost;
     }
 
     /**
-     * A helper method which calculates the price of all the items asked for from the list of shops and their menus
-     * obtained from the website
+     * A helper method which calculates the price of all the items asked for from a hashmap of all the items and their
+     * associated prices derived from the list of shops and their menus obtained from the website
      *
-     * @param shops A list of all the shops the drone delivers for which contains the menus of all the shops
+     * @param itemMap A map of all items from all the menus of the shops the drone delivers for linking each item to
+     *               its price and location
      * @param items A list of the items ordered for a given delivery
      * @return The total cost of the specified items
      */
-    private int getMenuCost(ArrayList<Shop> shops, String[] items) {
+    private int getMenuCost(Map<String, Item> itemMap, List<String> items) {
         int menuCost = 0;
-        for (String order : items) {
-            for (Shop shop : shops) {
-                for (Item item : shop.getMenu()) {
-                    if (item.getItem().equals(order)) {
-                        menuCost += item.getPence();
-                        break;
-                    }
-                }
-            }
+        for (String item : items) {
+            menuCost += itemMap.get(item).getPence();
         }
         return menuCost;
+    }
+
+    public Map<String, Item> getItemMap() {
+        return itemMap;
     }
 
     public static MenuWebsiteClient getMenuClient() {
