@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.clients;
 
+import uk.ac.ed.inf.LongLat;
 import uk.ac.ed.inf.Menus;
 import uk.ac.ed.inf.entities.Order;
 
@@ -28,22 +29,25 @@ public class DatabaseClient {
         initialiseFlightPathTable();
     }
 
-    public HashMap<String, Order> getOrdersByDate(Date date) {
+    public HashMap<String, Order> getOrdersByDate(Date date, Menus menus) {
         HashMap<String, Order> orders = new HashMap<>();
         try {
             final String coursesQuery =
-                    "select o.ORDERNO, ITEM, DELIVERTO from ORDERDETAILS join (select * from ORDERS where deliveryDate=(?)) o on ORDERDETAILS.orderNo=o.orderNo";
-            PreparedStatement psCourseQuery =
-                    conn.prepareStatement(coursesQuery);
+                    "select o.ORDERNO, ITEM, DELIVERTO from ORDERDETAILS join (select * from ORDERS where deliveryDate=(?)) o on ORDERDETAILS.orderNo=o.ORDERNO";
+            PreparedStatement psCourseQuery = conn.prepareStatement(coursesQuery);
             psCourseQuery.setString(1, String.valueOf(date));
             ResultSet rs = psCourseQuery.executeQuery();
 
             while (rs.next()) {
                 String orderNo = rs.getString("ORDERNO");
                 if (!orders.containsKey(orderNo)) {
-                    orders.put(orderNo, new Order(rs.getString("DELIVERTO")));
+                    LongLat deliverTo = Menus.getMenuClient().getLongLatFromLocationWord(rs.getString("DELIVERTO"));
+                    orders.put(orderNo, new Order(orderNo, deliverTo));
                 }
-                orders.get(orderNo).addItem(rs.getString("ITEM"));
+                orders.get(orderNo).addItem(rs.getString("ITEM"), new LongLat(1, 2));
+            }
+            for (Order order: orders.values()) {
+                order.setDeliveryCost(menus.getDeliveryCost(order.getItems().toArray(new String[4])));
             }
         } catch (SQLException e) {
             System.err.println("Could not retrieve the order information");

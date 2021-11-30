@@ -1,5 +1,7 @@
 package uk.ac.ed.inf;
 
+import java.util.Objects;
+
 /**
  * Class to represent the location of the drone
  * Contains methods to help define the relative position and motion of the drone
@@ -12,6 +14,9 @@ public class LongLat {
     public static final double DISTANCE_TOLERANCE_IN_DEGREES = 0.00015;
     public static final double DRONE_MOVE_LENGTH = 0.00015;
     public static final int HOVERING_ANGLE = -999;
+
+    public static final double APPLETON_TOWER_LONGITUDE = -3.186874;
+    public static final double APPLETON_TOWER_LATITUDE = 55.944494;
 
     /**
      * MINIMUM_LONGITUDE, MAXIMUM_LONGITUDE, MINIMUM_LATITUDE and MAXIMUM_LATITUDE
@@ -95,8 +100,48 @@ public class LongLat {
             return new LongLat(this.longitude + (DRONE_MOVE_LENGTH * Math.cos(angleInRadians)), this.latitude + (DRONE_MOVE_LENGTH * Math.sin(angleInRadians)));
         }
     }
-    
-    public void findPath( LongLat from, LongLat to) {
 
+    public int getClosestAngleToDestination(LongLat destination) {
+        double yDistance = destination.getLatitude() - this.latitude;
+        double xDistance = destination.getLongitude() - this.longitude;
+        double angleRadians = Math.atan(yDistance / xDistance);
+        double angleDegrees = Math.toDegrees(angleRadians);
+        double angleFromEast = 0.0;
+        // Calculate the angle anti-clockwise, with East = 0 degrees
+        if (xDistance > 0 && yDistance > 0) {
+            angleFromEast = angleDegrees;
+        } else if (xDistance < 0 && yDistance > 0) {
+            angleFromEast = 180 - Math.abs(angleDegrees);
+        } else if (xDistance < 0 && yDistance < 0) {
+            angleFromEast = 180 + angleDegrees;
+        } else if (xDistance > 0 && yDistance < 0) {
+            angleFromEast = 360 - (Math.abs(angleDegrees));
+        }
+        // Round the angle up or down to the corresponding multiple of 10
+        return (int) (10*(Math.round(angleFromEast/10)));
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LongLat longLat = (LongLat) o;
+        return Double.compare(longLat.longitude, longitude) == 0 && Double.compare(longLat.latitude, latitude) == 0;
+    }
+
+    @Override
+    public String toString() {
+        return "LongLat{" +
+                "longitude=" + longitude +
+                ", latitude=" + latitude +
+                '}';
     }
 }

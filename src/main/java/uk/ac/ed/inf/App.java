@@ -1,10 +1,21 @@
 package uk.ac.ed.inf;
 
+import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.LineString;
 import uk.ac.ed.inf.clients.DatabaseClient;
+import uk.ac.ed.inf.clients.MenuWebsiteClient;
 import uk.ac.ed.inf.entities.Order;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Hello world!
@@ -21,12 +32,25 @@ public class App {
         String databaseServerPort = args[4];
         String machineName = "localhost";
 
-//        MenuWebsiteClient menuWebsiteClient = new MenuWebsiteClient(machineName, webServerPort);
+        Menus menus = new Menus(machineName, webServerPort);
         DatabaseClient databaseClient = new DatabaseClient(machineName, databaseServerPort);
-        HashMap<String, Order> orders = databaseClient.getOrdersByDate(date);
+        HashMap<String, Order> orders = databaseClient.getOrdersByDate(date, menus);
 
-        for (Order order : orders.values()) {
-            System.out.println(order);
+        FeatureCollection noFlyZone = Menus.getMenuClient().getNoFlyZone();
+        ArrayList<Order> destinations = new ArrayList<>(orders.values());
+        Drone drone = new Drone(new LongLat(LongLat.APPLETON_TOWER_LONGITUDE, LongLat.APPLETON_TOWER_LATITUDE),
+                noFlyZone,
+                destinations);
+        drone.visitLocations();
+        noFlyZone.features().add(Feature.fromGeometry(LineString.fromLngLats(drone.flightpathData)));
+        noFlyZone.toJson();
+
+        Path path = Paths.get("drone-" + day + '-' + month + '-' + year + ".geojson");
+
+        try {
+            Files.writeString(path, noFlyZone.toJson());
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
         }
     }
 }

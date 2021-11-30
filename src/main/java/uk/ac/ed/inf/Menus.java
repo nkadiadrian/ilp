@@ -34,10 +34,6 @@ public class Menus {
     public int getDeliveryCost(String... items) {
         assert (items.length > 0 & items.length <= 4);
         ArrayList<Shop> shops = menuClient.getAllShopsMenus();
-        for (Shop shop : shops) {
-            System.out.println(shop.getMenu().get(0).getItem());
-        }
-
         int menuCost = getMenuCost(shops, items);
         return DELIVERY_CHARGE + menuCost;
     }
@@ -63,5 +59,9 @@ public class Menus {
             }
         }
         return menuCost;
+    }
+
+    public static MenuWebsiteClient getMenuClient() {
+        return menuClient;
     }
 }

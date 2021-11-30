@@ -16,6 +16,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * The singular client used to access the data on the website. This contains the httpClient used to connect to the website
@@ -138,6 +139,6 @@ public class MenuWebsiteClient {
      * storing the full server address to be used to elsewhere
      */
     private void setServerAddress() {
-        this.serverAddress = "http://" + machineName + ":" + port;
+        this.serverAddress = "http://" + machineName + ":" + port + "/website";
     }
 }
