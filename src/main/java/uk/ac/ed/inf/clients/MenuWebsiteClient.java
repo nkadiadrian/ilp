@@ -81,7 +81,7 @@ public class MenuWebsiteClient {
      * @return a list of all the shops and their menus available from the website.
      * An empty list is returned if no data is fetched.
      */
-    public ArrayList<Shop> getAllShopsMenus() {
+    public ArrayList<Shop> getAllShopsMenus() { // TODO: Get this as hashmap instead
         String response = GET(SHOPS_MENUS_DIRECTORY);
         Type shopsType = new TypeToken<ArrayList<Shop>>() {
         }.getType();
@@ -96,7 +96,8 @@ public class MenuWebsiteClient {
     public LongLat getLongLatFromLocationWord(String word) {
         String wordDirectory = word.replace('.', '/');
         String response = GET("/words/" + wordDirectory + "/details.json");
-        Coordinates coordinates = gson.fromJson(response, Coordinates.class);
+        System.out.println(response);
+        Coordinates coordinates = gson.fromJson(response, Coordinates.class);  // TODO: Fix Parsing
         return new LongLat(coordinates.getLng(), coordinates.getLat());
     }
 

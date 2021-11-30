@@ -1,6 +1,6 @@
 package uk.ac.ed.inf.entities;
 
-public class Coordinates {
+public class Coordinates { //TODO: FIX PARSING
     private double lng;
     private double lat;
 

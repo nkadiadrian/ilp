@@ -36,17 +36,16 @@ public class App {
         DatabaseClient databaseClient = new DatabaseClient(machineName, databaseServerPort);
         HashMap<String, Order> orders = databaseClient.getOrdersByDate(date, menus);
 
+        ArrayList<Order> destinations = new ArrayList<>(orders.values()); // TODO: GET ORDERED DESTINATIONS PROPERLY
         FeatureCollection noFlyZone = Menus.getMenuClient().getNoFlyZone();
-        ArrayList<Order> destinations = new ArrayList<>(orders.values());
-        Drone drone = new Drone(new LongLat(LongLat.APPLETON_TOWER_LONGITUDE, LongLat.APPLETON_TOWER_LATITUDE),
-                noFlyZone,
-                destinations);
+        LongLat startPosition = new LongLat(LongLat.APPLETON_TOWER_LONGITUDE, LongLat.APPLETON_TOWER_LATITUDE);
+
+        Drone drone = new Drone(startPosition, noFlyZone, destinations);
         drone.visitLocations();
         noFlyZone.features().add(Feature.fromGeometry(LineString.fromLngLats(drone.flightpathData)));
         noFlyZone.toJson();
 
         Path path = Paths.get("drone-" + day + '-' + month + '-' + year + ".geojson");
-
         try {
             Files.writeString(path, noFlyZone.toJson());
         } catch (IOException ex) {

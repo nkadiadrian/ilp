@@ -51,8 +51,7 @@ public class Drone {
         while (continueFlight) {
             LongLat destination = currentDestination;
             int direction = this.currentPosition.getClosestAngleToDestination(destination);
-            System.out.println("REBOOT");
-            moveDrone(direction, 0);
+            moveDrone(direction);
             // Check the stopping conditions
             if (this.moves == 0 || (currentPosition.closeTo(startPosition) && returningToStart)) {
                 continueFlight = false;
@@ -87,16 +86,13 @@ public class Drone {
     /*
      * Move the drone, update its position and add the new position coordinate to route
      */
-    private void moveDrone(int angle, int i) {
+    private void moveDrone(int angle) {
         LongLat proposedNextPosition = this.currentPosition.nextPosition(angle);
-        if (i % 150 == 0) System.out.println(i);
-        i++;
 
         // Check if the move involves flying through a No-Fly Zone
         if (moveIntersectsNoFlyZone(proposedNextPosition, this.currentPosition) || !proposedNextPosition.isConfined()) {
-//            System.out.println("Reset" + Integer.toString(i));
             angle = getNewAngleAnticlockwise(angle);
-            moveDrone(angle, i);
+            moveDrone(angle);
         }
         // Check if the suggested move has been repeated within the last 5 moves
 //        else if (isRepeatedMove(proposedNextPoint, this.currentPosition.toPoint())) {
@@ -118,7 +114,7 @@ public class Drone {
             }
             if (currentPosition.closeTo(currentDestination)) {
                 setCurrentDestination();
-                moveDrone(LongLat.HOVERING_ANGLE, i);
+                moveDrone(LongLat.HOVERING_ANGLE);
 
                 // add the moves to the flightpath thing
 
@@ -184,7 +180,6 @@ public class Drone {
                 noFlyBoundaries.add(line);
             }
         }
-        System.out.println(noFlyBoundaries.size());
         return noFlyBoundaries;
     }
 

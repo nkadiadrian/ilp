@@ -42,9 +42,10 @@ public class DatabaseClient {
                 String orderNo = rs.getString("ORDERNO");
                 if (!orders.containsKey(orderNo)) {
                     LongLat deliverTo = Menus.getMenuClient().getLongLatFromLocationWord(rs.getString("DELIVERTO"));
+                    System.out.println(deliverTo);
                     orders.put(orderNo, new Order(orderNo, deliverTo));
                 }
-                orders.get(orderNo).addItem(rs.getString("ITEM"), new LongLat(1, 2));
+                orders.get(orderNo).addItem(rs.getString("ITEM"), new LongLat(1, 2)); // TODO: Add Item coordinate locations
             }
             for (Order order: orders.values()) {
                 order.setDeliveryCost(menus.getDeliveryCost(order.getItems().toArray(new String[4])));
@@ -52,12 +53,6 @@ public class DatabaseClient {
         } catch (SQLException e) {
             System.err.println("Could not retrieve the order information");
         }
-
-//        Menus menus = new Menus(machineName, port);
-//        for (Order order: orders.values()) {
-//            String[] orderItems = order.getItems().toArray(new String[0]);
-//            order.setDeliveryCost(menus.getDeliveryCost(orderItems));
-//        }
 
         return orders;
     }
@@ -98,6 +93,8 @@ public class DatabaseClient {
             System.err.println("Error initialising the flightpath table");
         }
     }
+
+    // TODO: Write everything to databases
 
     private void setJdbcString() {
         this.jdbcString = "jdbc:derby://" + machineName + ":" + port + DATABASE_NAME;

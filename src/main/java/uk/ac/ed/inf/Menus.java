@@ -9,7 +9,7 @@ import java.util.ArrayList;
 /**
  * A class for retrieving all menu items and calculating the price of delivering from the menus on the website
  */
-public class Menus {
+public class Menus { // TODO: USE HASHMAP FOR THESE
     public static final int DELIVERY_CHARGE = 50;
     private static MenuWebsiteClient menuClient;
 

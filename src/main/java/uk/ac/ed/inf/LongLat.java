@@ -1,5 +1,7 @@
 package uk.ac.ed.inf;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Objects;
 
 /**
@@ -28,7 +30,9 @@ public class LongLat {
     private static final double MINIMUM_LATITUDE = 55.942617;
     private static final double MAXIMUM_LATITUDE = 55.946233;
 
+    @SerializedName("lng") // TODO: POSSIBLY REPLACE PARSER TO ELIMINATE COORDINATES CLAS
     public double longitude;
+    @SerializedName("lat")
     public double latitude;
 
     /**
