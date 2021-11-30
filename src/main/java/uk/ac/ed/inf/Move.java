@@ -1,12 +1,14 @@
 package uk.ac.ed.inf;
 
+import java.util.Objects;
+
 public class Move {
-    private String orderNo;
-    private double fromLongitude;
-    private double fromLatitude;
-    private int angle;
-    private double toLongitude;
-    private double toLatitude;
+    public String orderNo;
+    public double fromLongitude;
+    public double fromLatitude;
+    public int angle;
+    public double toLongitude;
+    public double toLatitude;
 
     public Move(String orderNo, int angle, LongLat fromLocation, LongLat toLocation) {
         this.orderNo = orderNo;
@@ -16,6 +18,14 @@ public class Move {
         this.toLongitude = toLocation.getLongitude();
         this.toLatitude = toLocation.getLatitude();
     }
+
+    public Move(Move move) {
+        this.orderNo = move.orderNo;
+        this.fromLongitude = move.fromLongitude;
+        this.fromLatitude = move.fromLatitude;
+        this.angle = move.angle;
+        this.toLongitude = move.toLongitude;
+        this.toLatitude = move.toLatitude;}
 
     public String getOrderNo() {
         return orderNo;
@@ -39,5 +49,13 @@ public class Move {
 
     public double getToLatitude() {
         return toLatitude;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Move move = (Move) o;
+        return Double.compare(move.fromLongitude, fromLongitude) == 0 && Double.compare(move.fromLatitude, fromLatitude) == 0 && angle == move.angle && Double.compare(move.toLongitude, toLongitude) == 0 && Double.compare(move.toLatitude, toLatitude) == 0 && Objects.equals(orderNo, move.orderNo);
     }
 }

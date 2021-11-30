@@ -53,7 +53,11 @@ public class Drone {
             int direction = this.currentPosition.getClosestAngleToDestination(destination);
             moveDrone(direction);
             // Check the stopping conditions
-            if (this.moves == 0 || (currentPosition.closeTo(startPosition) && returningToStart)) {
+            if (this.moves == 0) {
+                System.out.println("DEAD");
+                continueFlight = false;
+            }
+            if (currentPosition.closeTo(startPosition) && returningToStart) {
                 System.out.println("HOME");
                 continueFlight = false;
             }
@@ -91,16 +95,29 @@ public class Drone {
         LongLat proposedNextPosition = this.currentPosition.nextPosition(angle);
 
         // Check if the move involves flying through a No-Fly Zone
+        Move proposedMove = new Move(orderLocations.get(currentOrderIndex).getOrderNo(), angle, currentPosition, proposedNextPosition);
+        if (route.size() > 0) {
+            Move reversedLastMove = new Move(route.get(route.size() - 1));
+            reversedLastMove.angle = (reversedLastMove.angle + 180) % 360;
+            if (reversedLastMove.getOrderNo().equals(proposedMove.getOrderNo()) && reversedLastMove.angle == proposedMove.angle) {
+                moveDrone(route.get(route.size() - 1).angle);
+            }
+        }
+
         if (moveIntersectsNoFlyZone(proposedNextPosition, this.currentPosition) || !proposedNextPosition.isConfined()) {
             angle = getNewAngleAnticlockwise(angle);
             moveDrone(angle);
-            System.out.println("TRIGGER");
         }
-        // Check if the suggested move has been repeated within the last 5 moves
-//        else if (isRepeatedMove(proposedNextPoint, this.currentPosition.toPoint())) {
-//            angle = getNewAngleAnticlockwise(angle - 20);
-//        moveDrone(angle, currentPosition.nextPosition(angle));
-//        }
+        // Check if the suggested move has been repeated within the last 5
+        else if (isRepeatedMove(proposedMove)) {
+            angle = getNewAngleAnticlockwise((angle - 20) % 360);
+            System.out.println("Iter 0 Reached");
+            moveDrone(angle);
+            System.out.println("Iter 1 Reached");
+            moveDrone(angle);
+            System.out.println("Iter 2 Reached");
+            moveDrone(angle);
+        }
         // The move is a legal move for the drone
         else {
             String orderNo = orderLocations.get(currentOrderIndex).getOrderNo();
@@ -111,7 +128,7 @@ public class Drone {
             flightpathData.add(Point.fromLngLat(currentPosition.longitude, currentPosition.latitude));
             // Check if this new position is in range of a sensor and take reading if so
             double distanceHome = currentPosition.distanceTo(startPosition);
-            if (distanceHome > (moves + 15)*LongLat.DRONE_MOVE_LENGTH) {
+            if (distanceHome > (moves - 30)*LongLat.DRONE_MOVE_LENGTH) {
                 returningToStart = true;
                 setCurrentDestination();
             }
@@ -126,14 +143,12 @@ public class Drone {
      * Return true is the drone has already moved from point A to point B in the last 5 moves,
      * false if not.
      */
-    private boolean isRepeatedMove(Move proposedNext, Move current) {
-        for (int i = 1; i <= 5; i++) {
-            if (this.route.size() > 5) {
-                var pointA = this.route.get(this.route.size() - i);
-                var pointB = this.route.get(this.route.size() - (i + 1));
-                if (pointA.equals(proposedNext) && pointB.equals(current)) {
-                    return true;
-                }
+    private boolean isRepeatedMove(Move move) {
+        if (this.route.size() > 5) {
+            List<Move> last5Moves = route.subList(route.size() - 5, route.size());
+            if (last5Moves.contains(move)) {
+                System.out.println("REPETITON");
+                return true;
             }
         }
         return false;
