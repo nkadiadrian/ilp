@@ -155,13 +155,12 @@ public class Drone {
      * Return true if the line formed by the move goes into any No-Fly Zone, false if not.
      */
     private boolean moveIntersectsNoFlyZone(LongLat newPosition, LongLat initialPosition) {
-        Line2D moveLine = new Line2D.Double(newPosition.getLongitude(), initialPosition.getLongitude(),
-                newPosition.getLatitude(), initialPosition.getLatitude());
+        Line2D moveLine = new Line2D.Double(newPosition.getLongitude(), newPosition.getLatitude(),
+                initialPosition.getLongitude(), initialPosition.getLatitude());
         // Loop through all boundaries of No-Fly Zones and check if the move intersects.
         int iter = 0;
         for (Line2D boundary : this.noFlyBoundaries) {
             if (boundary.intersectsLine(moveLine)) {
-//                System.out.println(iter);
                 return true;
             }
             iter++;
