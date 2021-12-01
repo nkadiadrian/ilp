@@ -19,6 +19,7 @@ public class LongLat {
 
     public static final double APPLETON_TOWER_LONGITUDE = -3.186874;
     public static final double APPLETON_TOWER_LATITUDE = 55.944494;
+    public static final LongLat APPLETON = new LongLat(LongLat.APPLETON_TOWER_LONGITUDE, LongLat.APPLETON_TOWER_LATITUDE);
 
     /**
      * MINIMUM_LONGITUDE, MAXIMUM_LONGITUDE, MINIMUM_LATITUDE and MAXIMUM_LATITUDE

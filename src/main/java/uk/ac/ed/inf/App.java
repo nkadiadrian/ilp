@@ -3,8 +3,8 @@ package uk.ac.ed.inf;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.LineString;
+import com.mapbox.geojson.Point;
 import uk.ac.ed.inf.clients.DatabaseClient;
-import uk.ac.ed.inf.clients.MenuWebsiteClient;
 import uk.ac.ed.inf.entities.Order;
 
 import java.io.IOException;
@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Date;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -36,14 +35,21 @@ public class App {
         DatabaseClient databaseClient = new DatabaseClient(machineName, databaseServerPort);
         HashMap<String, Order> orders = databaseClient.getOrdersByDate(date, menus);
 
-        ArrayList<Order> destinations = new ArrayList<>(orders.values()); // TODO: GET ORDERED DESTINATIONS PROPERLY
-        FeatureCollection noFlyZone = Menus.getMenuClient().getNoFlyZone();
-        LongLat startPosition = new LongLat(LongLat.APPLETON_TOWER_LONGITUDE, LongLat.APPLETON_TOWER_LATITUDE);
+        Optimiser optimiser = new Optimiser(orders);
+//        ArrayList<Order> destinations = new ArrayList<>(orders.values()); 
+//        for (Order order: destinations) {
+//            System.out.println(order.getOrderNo());
+//        }
+        List<Order> destinations = optimiser.getGreedySolution();
+        FeatureCollection noFlyZone = Menus.getWebsiteClient().getNoFlyZone();
+        LongLat startPosition = LongLat.APPLETON;
 
         Drone drone = new Drone(startPosition, noFlyZone, destinations);
         drone.visitLocations();
         noFlyZone.features().add(Feature.fromGeometry(LineString.fromLngLats(drone.flightpathData)));
-        noFlyZone.toJson();
+        for (Order order: drone.fulfilledOrders) {
+            noFlyZone.features().add(Feature.fromGeometry(Point.fromLngLat(order.getDeliverTo().longitude, order.getDeliverTo().latitude)));
+        }
 
         Path path = Paths.get("drone-" + day + '-' + month + '-' + year + ".geojson");
         try {
@@ -53,5 +59,20 @@ public class App {
         }
         databaseClient.writeAllDeliveriesToTable(drone.fulfilledOrders);
         databaseClient.writeAllMovesToTable(drone.route);
+
+        double moneyEarned = 0;
+        for (Order order: drone.fulfilledOrders) {
+            moneyEarned += order.getDeliveryCost();
+        }
+        double potentialMoney = 0;
+        for (Order order: drone.orderLocations) {
+            potentialMoney += order.getDeliveryCost();
+        }
+
+        System.out.println(moneyEarned);
+        System.out.println(potentialMoney);
+        System.out.println(drone.fulfilledOrders.size());
+        System.out.println(drone.orderLocations.size());
+        System.out.println( moneyEarned / potentialMoney);
     }
 }

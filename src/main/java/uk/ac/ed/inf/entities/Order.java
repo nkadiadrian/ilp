@@ -4,21 +4,26 @@ import uk.ac.ed.inf.LongLat;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class Order {
     private String orderNo;
     private LongLat deliverTo;
     private String threeWordsDeliverTo;
     private int deliveryCost;
-    private ArrayList<LongLat> shopLocations = new ArrayList<>();
-    private ArrayList<String> items;
-    private boolean visitFirstShopFirst = true;
+    private List<LongLat> shopLocations = new ArrayList<>();
+    private List<String> items;
 
     public Order(String orderNo, LongLat deliverTo, String threeWordsDeliverTo) {
         this.orderNo = orderNo;
         this.deliverTo = deliverTo;
         this.threeWordsDeliverTo = threeWordsDeliverTo;
         this.items = new ArrayList<>();
+    }
+
+    public Order(LongLat deliverTo, List<LongLat> shopLocations) {
+        this.deliverTo = deliverTo;
+        this.shopLocations = shopLocations;
     }
 
     public void addItem(String item, LongLat shopLocation) {
@@ -40,7 +45,7 @@ public class Order {
         this.threeWordsDeliverTo = threeWordsDeliverTo;
     }
 
-    public ArrayList<LongLat> getShopLocations() {
+    public List<LongLat> getShopLocations() {
         return shopLocations;
     }
 
@@ -56,11 +61,11 @@ public class Order {
         this.deliveryCost = deliveryCost;
     }
 
-    public ArrayList<String> getItems() {
+    public List<String> getItems() {
         return items;
     }
 
-    public void setItems(ArrayList<String> items) {
+    public void setItems(List<String> items) {
         this.items = items;
     }
 
@@ -72,21 +77,13 @@ public class Order {
         this.orderNo = orderNo;
     }
 
-    public ArrayList<LongLat> getAllLocations(){
-        ArrayList<LongLat> locations = new ArrayList<>(this.shopLocations);
+    public List<LongLat> getAllLocations(){
+        List<LongLat> locations = new ArrayList<>(this.shopLocations);
         locations.add(this.deliverTo);
         return locations;
     }
 
     public void setShopLocations(ArrayList<LongLat> shopLocations) {
         this.shopLocations = shopLocations;
-    }
-
-    public boolean isVisitFirstShopFirst() {
-        return visitFirstShopFirst;
-    }
-
-    public void setVisitFirstShopFirst(boolean visitFirstShopFirst) {
-        this.visitFirstShopFirst = visitFirstShopFirst;
     }
 }

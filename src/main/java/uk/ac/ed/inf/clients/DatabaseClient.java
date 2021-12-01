@@ -3,13 +3,11 @@ package uk.ac.ed.inf.clients;
 import uk.ac.ed.inf.LongLat;
 import uk.ac.ed.inf.Menus;
 import uk.ac.ed.inf.Move;
-import uk.ac.ed.inf.entities.Item;
 import uk.ac.ed.inf.entities.Order;
 
 import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DatabaseClient {
     public static final String DATABASE_NAME = "/derbyDB";
@@ -46,12 +44,12 @@ public class DatabaseClient {
                 String orderNo = rs.getString("ORDERNO");
                 if (!orders.containsKey(orderNo)) {
                     String whatThreeWordsDeliverTo = rs.getString("DELIVERTO");
-                    LongLat deliverTo = Menus.getMenuClient().getLongLatFromLocationWord(whatThreeWordsDeliverTo);
+                    LongLat deliverTo = Menus.getWebsiteClient().getLongLatFromLocationWord(whatThreeWordsDeliverTo);
                     orders.put(orderNo, new Order(orderNo, deliverTo, whatThreeWordsDeliverTo));
                 }
 
                 String item = rs.getString("ITEM");
-                LongLat itemLocation = Menus.getMenuClient().getLongLatFromLocationWord(menus.getItemMap().get(item).getLocation());
+                LongLat itemLocation = Menus.getWebsiteClient().getLongLatFromLocationWord(menus.getItemMap().get(item).getLocation());
                 orders.get(orderNo).addItem(item, itemLocation); // TODO: Add Item coordinate locations
             }
             for (Order order: orders.values()) {

@@ -22,7 +22,7 @@ import java.util.List;
  * The singular client used to access the data on the website. This contains the httpClient used to connect to the website
  * The class also contains the methods used to extract and serialise specific data files from said website
  */
-public class MenuWebsiteClient {
+public class WebsiteClient {
     // The address of the file containing the list of shops with their respective menus
     public static final String SHOPS_MENUS_DIRECTORY = "/menus/menus.json";
 
@@ -39,7 +39,7 @@ public class MenuWebsiteClient {
      * @param machineName The name of the machine the website is being run on
      * @param port        The port number the website is being run on
      */
-    public MenuWebsiteClient(String machineName, String port) {
+    public WebsiteClient(String machineName, String port) {
         this.machineName = machineName;
         this.port = port;
         setServerAddress();

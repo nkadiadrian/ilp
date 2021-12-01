@@ -32,7 +32,7 @@ public class Drone {
     private List<Line2D> noFlyBoundaries;
 
 
-    public Drone(LongLat startPosition, FeatureCollection noFlyZone, ArrayList<Order> orderLocations) {
+    public Drone(LongLat startPosition, FeatureCollection noFlyZone, List<Order> orderLocations) {
         this.startPosition = startPosition;
         this.currentPosition = startPosition;
         this.returningToStart = false;
@@ -52,6 +52,12 @@ public class Drone {
             LongLat destination = currentDestination;
             int direction = this.currentPosition.getClosestAngleToDestination(destination);
             moveDrone(direction);
+
+            double distanceHome = currentPosition.distanceTo(startPosition);
+            if (distanceHome > (moves - 30)*LongLat.DRONE_MOVE_LENGTH) {
+                returningToStart = true;
+                setCurrentDestination();
+            }
             // Check the stopping conditions
             if (this.moves == 0) {
                 System.out.println("DEAD");
@@ -65,7 +71,7 @@ public class Drone {
     }
 
     private void setCurrentDestination() {
-        ArrayList<LongLat> currOrderLocations = orderLocations.get(currentOrderIndex).getAllLocations();
+        List<LongLat> currOrderLocations = orderLocations.get(currentOrderIndex).getAllLocations();
         currentLocationOrderIndex++;
         if (returningToStart) {
             currentDestination = startPosition;
@@ -96,13 +102,13 @@ public class Drone {
 
         // Check if the move involves flying through a No-Fly Zone
         Move proposedMove = new Move(orderLocations.get(currentOrderIndex).getOrderNo(), angle, currentPosition, proposedNextPosition);
-        if (route.size() > 0) {
-            Move reversedLastMove = new Move(route.get(route.size() - 1));
-            reversedLastMove.angle = (reversedLastMove.angle + 180) % 360;
-            if (reversedLastMove.getOrderNo().equals(proposedMove.getOrderNo()) && reversedLastMove.angle == proposedMove.angle) {
-                moveDrone(route.get(route.size() - 1).angle);
-            }
-        }
+//        if (route.size() > 0) {
+//            Move reversedLastMove = new Move(route.get(route.size() - 1));
+//            reversedLastMove.angle =  Math.floorMod(reversedLastMove.angle + 180, 360);
+//            if (reversedLastMove.getOrderNo().equals(proposedMove.getOrderNo()) && reversedLastMove.angle == proposedMove.angle) {
+//                moveDrone(getNewAngleAnticlockwise(route.get(route.size() - 1).angle - 10));
+//            }
+//        }
 
         if (moveIntersectsNoFlyZone(proposedNextPosition, this.currentPosition) || !proposedNextPosition.isConfined()) {
             angle = getNewAngleAnticlockwise(angle);
@@ -110,12 +116,9 @@ public class Drone {
         }
         // Check if the suggested move has been repeated within the last 5
         else if (isRepeatedMove(proposedMove)) {
-            angle = getNewAngleAnticlockwise((angle - 20) % 360);
-            System.out.println("Iter 0 Reached");
+            angle = getNewAngleAnticlockwise((angle - 30));
             moveDrone(angle);
-            System.out.println("Iter 1 Reached");
             moveDrone(angle);
-            System.out.println("Iter 2 Reached");
             moveDrone(angle);
         }
         // The move is a legal move for the drone
@@ -127,14 +130,11 @@ public class Drone {
             route.add(newMove);
             flightpathData.add(Point.fromLngLat(currentPosition.longitude, currentPosition.latitude));
             // Check if this new position is in range of a sensor and take reading if so
-            double distanceHome = currentPosition.distanceTo(startPosition);
-            if (distanceHome > (moves - 30)*LongLat.DRONE_MOVE_LENGTH) {
-                returningToStart = true;
-                setCurrentDestination();
-            }
             if (currentPosition.closeTo(currentDestination)) {
                 setCurrentDestination();
-//                moveDrone(LongLat.HOVERING_ANGLE);
+                Move hoverMove = new Move(orderNo, LongLat.HOVERING_ANGLE, currentPosition, currentPosition);
+                this.moves--;
+                route.add(hoverMove);
             }
         }
     }
@@ -158,7 +158,7 @@ public class Drone {
      * Return the next angle in anti-clockwise direction
      */
     private int getNewAngleAnticlockwise(int angle) {
-        return ((angle - 10) % 360);
+        return (Math.floorMod(angle - 10, 360));
     }
 
     /*

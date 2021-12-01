@@ -1,10 +1,9 @@
 package uk.ac.ed.inf;
 
-import uk.ac.ed.inf.clients.MenuWebsiteClient;
+import uk.ac.ed.inf.clients.WebsiteClient;
 import uk.ac.ed.inf.entities.Item;
 import uk.ac.ed.inf.entities.Shop;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,7 @@ import java.util.Map;
  */
 public class Menus {
     public static final int DELIVERY_CHARGE = 50;
-    private static MenuWebsiteClient menuClient;
+    private static WebsiteClient websiteClient;
     private Map<String, Item> itemMap;
 
 
@@ -26,8 +25,8 @@ public class Menus {
      * @param port        The port number the website is being run on
      */
     public Menus(String machineName, String port) {
-        menuClient = new MenuWebsiteClient(machineName, port);
-        List<Shop> shopList = menuClient.getAllShopsMenus();
+        websiteClient = new WebsiteClient(machineName, port);
+        List<Shop> shopList = websiteClient.getAllShopsMenus();
 
         itemMap = new HashMap<>();
         for (Shop shop: shopList) {
@@ -72,7 +71,7 @@ public class Menus {
         return itemMap;
     }
 
-    public static MenuWebsiteClient getMenuClient() {
-        return menuClient;
+    public static WebsiteClient getWebsiteClient() {
+        return websiteClient;
     }
 }
