@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Date;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -38,15 +37,16 @@ public class App {
         FeatureCollection noFlyZone = Menus.getWebsiteClient().getNoFlyZone();
         Optimiser optimiser = new Optimiser(orders, noFlyZone);
         optimiser.useGreedy();
+        System.out.println(optimiser.visitOrder);
 //        optimiser.useSwapHeuristic(-1);
-        optimiser.useTwoOptHeuristic(-1);
+//        optimiser.useTwoOptHeuristic(-1);
         List<Order> destinations = optimiser.getOptimisedOrderList();
         LongLat startPosition = LongLat.APPLETON;
 
         Drone drone = new Drone(startPosition, noFlyZone, destinations);
         drone.visitLocations();
         noFlyZone.features().add(Feature.fromGeometry(LineString.fromLngLats(drone.flightpathData)));
-        for (Order order: drone.fulfilledOrders) {
+        for (Order order : drone.fulfilledOrders) {
             noFlyZone.features().add(Feature.fromGeometry(Point.fromLngLat(order.getDeliverTo().longitude, order.getDeliverTo().latitude)));
         }
 
@@ -60,19 +60,19 @@ public class App {
         databaseClient.writeAllMovesToTable(drone.route);
 
         double moneyEarned = 0;
-        for (Order order: drone.fulfilledOrders) {
+        for (Order order : drone.fulfilledOrders) {
             moneyEarned += order.getDeliveryCost();
         }
         double potentialMoney = 0;
-        for (Order order: drone.orderLocations) {
+        for (Order order : drone.orderLocations) {
             potentialMoney += order.getDeliveryCost();
         }
 
         System.out.println(drone.fulfilledOrders.size());
         System.out.println(drone.orderLocations.size());
-        System.out.println(drone.fulfilledOrders.size()/(double) drone.orderLocations.size());
+        System.out.println(drone.fulfilledOrders.size() / (double) drone.orderLocations.size());
         System.out.println(moneyEarned);
         System.out.println(potentialMoney);
-        System.out.println( moneyEarned / potentialMoney);
+        System.out.println(moneyEarned / potentialMoney);
     }
 }

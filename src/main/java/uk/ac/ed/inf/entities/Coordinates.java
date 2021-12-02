@@ -1,8 +1,8 @@
 package uk.ac.ed.inf.entities;
 
 public class Coordinates { //TODO: FIX PARSING
-    private double lng;
-    private double lat;
+    private final double lng;
+    private final double lat;
 
     public Coordinates(double lng, double lat) {
         this.lng = lng;

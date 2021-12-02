@@ -2,8 +2,6 @@ package uk.ac.ed.inf;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.Objects;
-
 /**
  * Class to represent the location of the drone
  * Contains methods to help define the relative position and motion of the drone
@@ -82,15 +80,15 @@ public class LongLat {
     /**
      * Calculates the next position from the current point based on the given movement angle.
      * If the angle is the specified hovering angle then the original position is returned.
-     *
+     * <p>
      * However, for multiples of 10 from 0 to 350 the new position is calculated as follows:
      * - The bearing angle 0 is taken as east, 90 as north, 180 as west and 270 as south
      * - Since longitude increases in the eastward direction and latitude in the north, a triangle is formed
-     *   with a hypotenuse of one movement length, the longitude adjacent the angle and the latitude opposite the angle
+     * with a hypotenuse of one movement length, the longitude adjacent the angle and the latitude opposite the angle
      * - As such the increase in latitude can be calculated by the drone move length multiplied by the cosine of the angle
-     *   from cos (theta) = adjacent / hypotenuse
+     * from cos (theta) = adjacent / hypotenuse
      * - Similarly, the increase in longitude can be calculate by the drone move length multiplied by the sine of the angle
-     *   from sin (theta) = opposite / hypotenuse
+     * from sin (theta) = opposite / hypotenuse
      *
      * @param angle The movement angle
      * @return A LongLat object at the new location of the drone were it to make one move at the specified angle
@@ -123,7 +121,7 @@ public class LongLat {
             angleFromEast = 360 - (Math.abs(angleDegrees));
         }
         // Round the angle up or down to the corresponding multiple of 10
-        return (int) (10*(Math.round(angleFromEast/10)));
+        return (int) (10 * (Math.round(angleFromEast / 10)));
     }
 
     public double getLongitude() {

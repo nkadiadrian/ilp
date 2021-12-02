@@ -16,21 +16,21 @@ import java.util.List;
  */
 public class Drone {
 
-    private LongLat startPosition;
-    private FeatureCollection noFlyZone;
     public List<Move> route = new ArrayList<Move>();
     public List<LongLat> homeRouteLandmarks = new ArrayList<LongLat>();
     public List<Order> orderLocations;
     public List<Order> fulfilledOrders = new ArrayList<Order>();
     public List<Point> flightpathData = new ArrayList<>();
     public LongLat currentDestination;
-    private LongLat currentPosition;
     public int moves = 1500;
-    private boolean returningToStart;
     public boolean homeWhenDone = true;
+    private final LongLat startPosition;
+    private final FeatureCollection noFlyZone;
+    private LongLat currentPosition;
+    private boolean returningToStart;
     private int currentOrderIndex = 0;
     private int currentLocationOrderIndex = 0;
-    private List<Line2D> noFlyBoundaries;
+    private final List<Line2D> noFlyBoundaries;
 
 
     public Drone(LongLat startPosition, FeatureCollection noFlyZone, List<Order> orderLocations) {
@@ -55,7 +55,7 @@ public class Drone {
             moveDrone(direction);
 
             double distanceHome = currentPosition.distanceTo(startPosition);
-            if (distanceHome > (moves - 30)*LongLat.DRONE_MOVE_LENGTH) {
+            if (distanceHome > (moves - 30) * LongLat.DRONE_MOVE_LENGTH) {
                 returningToStart = true;
                 setCurrentDestination();
             }
@@ -114,16 +114,16 @@ public class Drone {
 //        }
 
         if (moveIntersectsNoFlyZone(proposedNextPosition, this.currentPosition) || !proposedNextPosition.isConfined()) {
-            angle = getNewAngleAnticlockwise(angle - 20);
-            moveDrone(angle);
-            moveDrone(angle);
+            angle = getNewAngleAnticlockwise(angle - 10);
+            moveDrone(angle - 10);
+            moveDrone(angle - 10);
         }
         // Check if the suggested move has been repeated within the last 5
         else if (isRepeatedMove(proposedMove)) {
             angle = getNewAngleAnticlockwise((angle - 20));
             moveDrone(angle);
-            moveDrone(angle);
-            moveDrone(angle);
+//            moveDrone(angle);
+//            moveDrone(angle);
         }
         // The move is a legal move for the drone
         else {
@@ -150,10 +150,8 @@ public class Drone {
     private boolean isRepeatedMove(Move move) {
         if (this.route.size() > 5) {
             List<Move> last5Moves = route.subList(route.size() - 5, route.size());
-            if (last5Moves.contains(move)) {
-//                System.out.println("REPETITION");
-                return true;
-            }
+            //                System.out.println("REPETITION");
+            return last5Moves.contains(move);
         }
         return false;
     }

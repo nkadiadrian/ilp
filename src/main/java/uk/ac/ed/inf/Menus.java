@@ -14,7 +14,7 @@ import java.util.Map;
 public class Menus {
     public static final int DELIVERY_CHARGE = 50;
     private static WebsiteClient websiteClient;
-    private Map<String, Item> itemMap;
+    private final Map<String, Item> itemMap;
 
 
     /**
@@ -29,12 +29,16 @@ public class Menus {
         List<Shop> shopList = websiteClient.getAllShopsMenus();
 
         itemMap = new HashMap<>();
-        for (Shop shop: shopList) {
-            for (Item item: shop.getMenu()) {
+        for (Shop shop : shopList) {
+            for (Item item : shop.getMenu()) {
                 item.setLocation(shop.getLocation());
                 itemMap.put(item.getItem(), item);
             }
         }
+    }
+
+    public static WebsiteClient getWebsiteClient() {
+        return websiteClient;
     }
 
     /**
@@ -55,8 +59,8 @@ public class Menus {
      * associated prices derived from the list of shops and their menus obtained from the website
      *
      * @param itemMap A map of all items from all the menus of the shops the drone delivers for linking each item to
-     *               its price and location
-     * @param items A list of the items ordered for a given delivery
+     *                its price and location
+     * @param items   A list of the items ordered for a given delivery
      * @return The total cost of the specified items
      */
     private int getMenuCost(Map<String, Item> itemMap, List<String> items) {
@@ -69,9 +73,5 @@ public class Menus {
 
     public Map<String, Item> getItemMap() {
         return itemMap;
-    }
-
-    public static WebsiteClient getWebsiteClient() {
-        return websiteClient;
     }
 }

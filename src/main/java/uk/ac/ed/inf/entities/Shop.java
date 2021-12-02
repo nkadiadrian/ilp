@@ -7,9 +7,9 @@ import java.util.List;
  * An entity class used by gson to serialise the list of shops from the json file on the website server
  */
 public class Shop { //TODO: PARSE THIS AS HASHMAP INSTEAD
-    private String name;
-    private String location;
-    private List<Item> menu;
+    private final String name;
+    private final String location;
+    private final List<Item> menu;
 
     /**
      * @param name     the name of the shop

@@ -3,7 +3,6 @@ package uk.ac.ed.inf.entities;
 import uk.ac.ed.inf.LongLat;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Order {
@@ -37,6 +36,10 @@ public class Order {
         return deliverTo;
     }
 
+    public void setDeliverTo(LongLat deliverTo) {
+        this.deliverTo = deliverTo;
+    }
+
     public String getThreeWordsDeliverTo() {
         return threeWordsDeliverTo;
     }
@@ -49,8 +52,8 @@ public class Order {
         return shopLocations;
     }
 
-    public void setDeliverTo(LongLat deliverTo) {
-        this.deliverTo = deliverTo;
+    public void setShopLocations(ArrayList<LongLat> shopLocations) {
+        this.shopLocations = shopLocations;
     }
 
     public int getDeliveryCost() {
@@ -77,13 +80,9 @@ public class Order {
         this.orderNo = orderNo;
     }
 
-    public List<LongLat> getAllLocations(){
+    public List<LongLat> getAllLocations() {
         List<LongLat> locations = new ArrayList<>(this.shopLocations);
         locations.add(this.deliverTo);
         return locations;
-    }
-
-    public void setShopLocations(ArrayList<LongLat> shopLocations) {
-        this.shopLocations = shopLocations;
     }
 }

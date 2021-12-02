@@ -52,7 +52,7 @@ public class DatabaseClient {
                 LongLat itemLocation = Menus.getWebsiteClient().getLongLatFromLocationWord(menus.getItemMap().get(item).getLocation());
                 orders.get(orderNo).addItem(item, itemLocation); // TODO: Add Item coordinate locations
             }
-            for (Order order: orders.values()) {
+            for (Order order : orders.values()) {
                 order.setDeliveryCost(menus.getDeliveryCost(order.getItems()));
             }
         } catch (SQLException e) {
@@ -103,7 +103,7 @@ public class DatabaseClient {
         try {
             conn.setAutoCommit(false);
             PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO deliveries (orderNo, deliveredTo, costInPence) VALUES (?,?,?)");
-            for (Order order: fulfilledDeliveries) {
+            for (Order order : fulfilledDeliveries) {
                 preparedStatement.setString(1, order.getOrderNo());
                 preparedStatement.setString(2, order.getThreeWordsDeliverTo());
                 preparedStatement.setInt(3, order.getDeliveryCost());
@@ -122,7 +122,7 @@ public class DatabaseClient {
         try {
             conn.setAutoCommit(false);
             PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO flightpath (orderNo, fromLongitude, fromLatitude, angle, toLongitude, toLatitude) VALUES (?,?,?,?,?,?)");
-            for (Move move: moves) {
+            for (Move move : moves) {
                 preparedStatement.setString(1, move.getOrderNo());
                 preparedStatement.setDouble(2, move.getFromLongitude());
                 preparedStatement.setDouble(3, move.getFromLatitude());

@@ -4,9 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.mapbox.geojson.FeatureCollection;
 import uk.ac.ed.inf.LongLat;
-import uk.ac.ed.inf.entities.Coordinates;
-import uk.ac.ed.inf.entities.ThreeWordsDetails;
 import uk.ac.ed.inf.entities.Shop;
+import uk.ac.ed.inf.entities.ThreeWordsDetails;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

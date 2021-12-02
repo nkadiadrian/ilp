@@ -1,20 +1,20 @@
 package uk.ac.ed.inf;
 
-import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
-import com.mapbox.geojson.LineString;
-import com.mapbox.geojson.Point;
 import uk.ac.ed.inf.entities.Order;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class Optimiser {
-    private List<List<Double>> distanceMatrix = new ArrayList<>();
-    private List<List<Boolean>> firstPickUpMatrix = new ArrayList<>();
-    private List<Order> orders;
     public List<Integer> visitOrder;
-    private FeatureCollection noFlyZone;
+    private final List<List<Double>> distanceMatrix = new ArrayList<>();
+    private final List<List<Boolean>> firstPickUpMatrix = new ArrayList<>();
+    private final List<Order> orders;
+    private final FeatureCollection noFlyZone;
 
     public Optimiser(HashMap<String, Order> orderMap, FeatureCollection noFlyZone) {
         this.orders = new ArrayList<>(orderMap.values());
@@ -28,7 +28,7 @@ public class Optimiser {
         indices.removeAll(List.of(0));
         int previousIndex = 0;
         List<Order> optimisedOrders = new ArrayList<>();
-        for (int index: indices) {
+        for (int index : indices) {
             Order nextOrder = orders.get(index - 1);
             if (!firstPickUpMatrix.get(previousIndex).get(index)) {
                 Collections.reverse(nextOrder.getShopLocations());
@@ -49,7 +49,7 @@ public class Optimiser {
             int nextMove = 0;
 
             for (int i = 1; i < distanceRow.size(); i++) {
-                if (distanceRow.get(i) < minDist & !visitedIndices.contains(i) & i != currentindex ) {
+                if (distanceRow.get(i) < minDist & !visitedIndices.contains(i) & i != currentindex) {
                     minDist = distanceRow.get(i);
                     nextMove = i;
                 }
@@ -73,18 +73,18 @@ public class Optimiser {
         Order tempHomeOrder = new Order(LongLat.APPLETON, Collections.singletonList(LongLat.APPLETON));
         matrixOrders.add(0, tempHomeOrder);
 
-        for (LongLat deliverFrom: matrixOrders.stream().map(Order::getDeliverTo).collect(Collectors.toList())) {
+        for (LongLat deliverFrom : matrixOrders.stream().map(Order::getDeliverTo).collect(Collectors.toList())) {
             List<Double> distanceRow = new ArrayList<>();
             List<Boolean> firstPickUpRow = new ArrayList<>();
 
-            for (Order order: matrixOrders) {
+            for (Order order : matrixOrders) {
                 double distanceFirst = calcDistanceFirstShopFirst(deliverFrom, order);
                 double distanceSecond = calcDistanceLastShopFirst(deliverFrom, order);
-                if (distanceFirst <= distanceSecond / order.getDeliveryCost()) {
+                if (distanceFirst <= distanceSecond) {
                     distanceRow.add(distanceFirst);
                     firstPickUpRow.add(true);
                 } else {
-                    distanceRow.add(distanceSecond / order.getDeliveryCost());
+                    distanceRow.add(distanceSecond);
                     firstPickUpRow.add(false);
                 }
             }
@@ -151,7 +151,7 @@ public class Optimiser {
     private double getTourValue() {
         double tourCost = 0;
         for (int i = 0; i < visitOrder.size() - 1; i++) {
-            tourCost += distanceMatrix.get(visitOrder.get(i)).get(visitOrder.get(i+1));
+            tourCost += distanceMatrix.get(visitOrder.get(i)).get(visitOrder.get(i + 1));
 //            System.out.println(distanceMatrix.get(visitOrder.get(i)).get(visitOrder.get(i+1)));
 //            System.out.println(tourCost);
         }
