@@ -76,7 +76,7 @@ public class LongLat {
      * @return true if the target point is close to the current point as defined by the tolerance and false otherwise.
      */
     public boolean closeTo(LongLat target) {
-        return distanceTo(target) < DISTANCE_TOLERANCE_IN_DEGREES;
+        return distanceTo(target) <= DISTANCE_TOLERANCE_IN_DEGREES;
     }
 
     /**

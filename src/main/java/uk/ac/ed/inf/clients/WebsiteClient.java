@@ -139,6 +139,6 @@ public class WebsiteClient {
      * storing the full server address to be used to elsewhere
      */
     private void setServerAddress() {
-        this.serverAddress = "http://" + machineName + ":" + port + "/website";
+        this.serverAddress = "http://" + machineName + ":" + port;
     }
 }
