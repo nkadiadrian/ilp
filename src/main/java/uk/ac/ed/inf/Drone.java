@@ -25,8 +25,9 @@ public class Drone {
     public List<Point> flightpathData = new ArrayList<>();
     public LongLat currentDestination;
     private LongLat currentPosition;
-    private int moves = 1500;
+    public int moves = 1500;
     private boolean returningToStart;
+    public boolean homeWhenDone = true;
     private int currentOrderIndex = 0;
     private int currentLocationOrderIndex = 0;
     private List<Line2D> noFlyBoundaries;
@@ -60,11 +61,11 @@ public class Drone {
             }
             // Check the stopping conditions
             if (this.moves == 0) {
-                System.out.println("DEAD");
+//                System.out.println("DEAD");
                 continueFlight = false;
             }
-            if (currentPosition.closeTo(startPosition) && returningToStart) {
-                System.out.println("HOME");
+            if (currentPosition.closeTo(currentDestination) && returningToStart) {
+//                System.out.println("HOME");
                 continueFlight = false;
             }
         }
@@ -83,9 +84,11 @@ public class Drone {
             currentOrderIndex++;
             currentLocationOrderIndex = 0;
             if (this.currentOrderIndex == orderLocations.size()) {
-                currentOrderIndex--; // TODO: Create a "HOME" order
+                currentOrderIndex--;
+                if (homeWhenDone) {
+                    currentDestination = startPosition;
+                }
                 returningToStart = true;
-                currentDestination = startPosition;
                 return;
             }
             currOrderLocations = orderLocations.get(currentOrderIndex).getAllLocations();
@@ -111,12 +114,13 @@ public class Drone {
 //        }
 
         if (moveIntersectsNoFlyZone(proposedNextPosition, this.currentPosition) || !proposedNextPosition.isConfined()) {
-            angle = getNewAngleAnticlockwise(angle);
+            angle = getNewAngleAnticlockwise(angle - 20);
+            moveDrone(angle);
             moveDrone(angle);
         }
         // Check if the suggested move has been repeated within the last 5
         else if (isRepeatedMove(proposedMove)) {
-            angle = getNewAngleAnticlockwise((angle - 30));
+            angle = getNewAngleAnticlockwise((angle - 20));
             moveDrone(angle);
             moveDrone(angle);
             moveDrone(angle);
@@ -147,7 +151,7 @@ public class Drone {
         if (this.route.size() > 5) {
             List<Move> last5Moves = route.subList(route.size() - 5, route.size());
             if (last5Moves.contains(move)) {
-                System.out.println("REPETITON");
+//                System.out.println("REPETITION");
                 return true;
             }
         }

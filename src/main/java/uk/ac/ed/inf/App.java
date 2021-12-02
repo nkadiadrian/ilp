@@ -35,13 +35,12 @@ public class App {
         DatabaseClient databaseClient = new DatabaseClient(machineName, databaseServerPort);
         HashMap<String, Order> orders = databaseClient.getOrdersByDate(date, menus);
 
-        Optimiser optimiser = new Optimiser(orders);
-//        ArrayList<Order> destinations = new ArrayList<>(orders.values()); 
-//        for (Order order: destinations) {
-//            System.out.println(order.getOrderNo());
-//        }
-        List<Order> destinations = optimiser.getGreedySolution();
         FeatureCollection noFlyZone = Menus.getWebsiteClient().getNoFlyZone();
+        Optimiser optimiser = new Optimiser(orders, noFlyZone);
+        optimiser.useGreedy();
+//        optimiser.useSwapHeuristic(-1);
+        optimiser.useTwoOptHeuristic(-1);
+        List<Order> destinations = optimiser.getOptimisedOrderList();
         LongLat startPosition = LongLat.APPLETON;
 
         Drone drone = new Drone(startPosition, noFlyZone, destinations);
@@ -69,10 +68,11 @@ public class App {
             potentialMoney += order.getDeliveryCost();
         }
 
-        System.out.println(moneyEarned);
-        System.out.println(potentialMoney);
         System.out.println(drone.fulfilledOrders.size());
         System.out.println(drone.orderLocations.size());
+        System.out.println(drone.fulfilledOrders.size()/(double) drone.orderLocations.size());
+        System.out.println(moneyEarned);
+        System.out.println(potentialMoney);
         System.out.println( moneyEarned / potentialMoney);
     }
 }
