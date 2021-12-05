@@ -1,7 +1,6 @@
 package uk.ac.ed.inf;
 
 import com.mapbox.geojson.FeatureCollection;
-import uk.ac.ed.inf.entities.Order;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,11 +9,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Optimiser {
-    public List<Integer> visitOrder;
     private final List<List<Double>> distanceMatrix = new ArrayList<>();
     private final List<List<Boolean>> firstPickUpMatrix = new ArrayList<>();
     private final List<Order> orders;
     private final FeatureCollection noFlyZone;
+    public List<Integer> visitOrder;
 
     public Optimiser(HashMap<String, Order> orderMap, FeatureCollection noFlyZone) {
         this.orders = new ArrayList<>(orderMap.values());
@@ -71,15 +70,15 @@ public class Optimiser {
     private void initialiseMatrices() {
         List<Order> matrixOrders = new ArrayList<>(this.orders);
         Order tempHomeOrder = new Order(LongLat.APPLETON, Collections.singletonList(LongLat.APPLETON));
+        tempHomeOrder.setDeliveryCost(10);
         matrixOrders.add(0, tempHomeOrder);
 
         for (LongLat deliverFrom : matrixOrders.stream().map(Order::getDeliverTo).collect(Collectors.toList())) {
             List<Double> distanceRow = new ArrayList<>();
             List<Boolean> firstPickUpRow = new ArrayList<>();
-
             for (Order order : matrixOrders) {
-                double distanceFirst = calcDistanceFirstShopFirst(deliverFrom, order);
-                double distanceSecond = calcDistanceLastShopFirst(deliverFrom, order);
+                double distanceFirst = calcDistanceFirstShopFirst(deliverFrom, order) / order.getDeliveryCost();
+                double distanceSecond = calcDistanceLastShopFirst(deliverFrom, order) / order.getDeliveryCost();
                 if (distanceFirst <= distanceSecond) {
                     distanceRow.add(distanceFirst);
                     firstPickUpRow.add(true);
@@ -95,21 +94,12 @@ public class Optimiser {
     }
 
     private double calcDistanceFirstShopFirst(LongLat fromLocation, Order toOrder) {
-//        FeatureCollection map = FeatureCollection.fromFeatures(new ArrayList<>(noFlyZone.features()));
-//        map.features().add(Feature.fromGeometry(Point.fromLngLat(fromLocation.longitude, fromLocation.latitude)));
-//        List<Point> line = new ArrayList<>();
-//        for (LongLat spot: toOrder.getAllLocations()) {
-//            map.features().add(Feature.fromGeometry(Point.fromLngLat(spot.longitude, spot.latitude)));
-//        }
-//        map.features().add(Feature.fromGeometry(LineString.fromLngLats(line)));
-//        System.out.println(map.toJson());
-
         List<Order> order = Collections.singletonList(toOrder);
 
         Drone drone = new Drone(fromLocation, noFlyZone, order);
         drone.homeWhenDone = false;
         drone.visitLocations();
-        return 1500 - drone.moves;
+        return 1500 - drone.movesRemaining;
     }
 
     private double calcDistanceLastShopFirst(LongLat fromLocation, Order toOrder) {
@@ -121,9 +111,9 @@ public class Optimiser {
         Drone drone = new Drone(fromLocation, noFlyZone, order);
         drone.homeWhenDone = false;
         drone.visitLocations();
-        return 1500 - drone.moves;
+        return 1500 - drone.movesRemaining;
     }
-//
+
 //    private double calcDistanceFirstShopFirst(LongLat fromLocation, Order toOrder) {
 //        double distance = 0;
 //        List<LongLat> shopList = toOrder.getShopLocations();
@@ -152,8 +142,6 @@ public class Optimiser {
         double tourCost = 0;
         for (int i = 0; i < visitOrder.size() - 1; i++) {
             tourCost += distanceMatrix.get(visitOrder.get(i)).get(visitOrder.get(i + 1));
-//            System.out.println(distanceMatrix.get(visitOrder.get(i)).get(visitOrder.get(i+1)));
-//            System.out.println(tourCost);
         }
         tourCost += distanceMatrix.get(visitOrder.size() - 1).get(0);
         return tourCost;
@@ -162,19 +150,11 @@ public class Optimiser {
     private boolean trySwap(int i) {
         double oldCost = getTourValue();
         int j = (i + 1);
-//        System.out.println(visitOrder);
-//        System.out.println(oldCost);
         Collections.swap(visitOrder, i, j);
-//        System.out.println(visitOrder);
-//        System.out.println(getTourValue());
-//        System.out.println(i);
-//        System.out.println(j);
         if (getTourValue() < oldCost) {
-//            System.out.println("Succesful");
             return true;
         } else {
             Collections.swap(visitOrder, i, j);
-//            System.out.println("Failed");
             return false;
         }
     }

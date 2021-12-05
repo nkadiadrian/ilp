@@ -18,8 +18,8 @@ public class Menus {
 
 
     /**
-     * The constructor for the class initialises the menuClient using the parameters provided
-     * The menuClient is static so all instances of the Menus class have the same menuClient configured.
+     * The constructor for the class initialises the websiteClient using the parameters provided
+     * The websiteClient is static so all instances of the Menus class have the same websiteClient configured.
      *
      * @param machineName The name of the machine the website is being run on
      * @param port        The port number the website is being run on

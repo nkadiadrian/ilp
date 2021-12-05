@@ -1,89 +1,76 @@
 package uk.ac.ed.inf;
 
-import com.mapbox.geojson.FeatureCollection;
-import com.mapbox.geojson.Point;
-import com.mapbox.geojson.Polygon;
-import uk.ac.ed.inf.entities.Order;
+import com.mapbox.geojson.*;
 
 import java.awt.geom.Line2D;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-/*
- * The Drone class represents a Drone, with a position and number of
- * moves as attributes.
- *
- */
 public class Drone {
-
-    public List<Move> route = new ArrayList<Move>();
-    public List<LongLat> homeRouteLandmarks = new ArrayList<LongLat>();
-    public List<Order> orderLocations;
-    public List<Order> fulfilledOrders = new ArrayList<Order>();
-    public List<Point> flightpathData = new ArrayList<>();
-    public LongLat currentDestination;
-    public int moves = 1500;
-    public boolean homeWhenDone = true;
+    private final List<Line2D> noFlyZoneBoundaries;
     private final LongLat startPosition;
-    private final FeatureCollection noFlyZone;
-    private LongLat currentPosition;
-    private boolean returningToStart;
+    public List<Move> route = new ArrayList<>();
+    public List<Order> orders;
+    public List<Order> fulfilledOrders = new ArrayList<>();
+    public List<Point> flightpathData = new ArrayList<>();
+    public int movesRemaining = 1500;
+    public boolean homeWhenDone = true;
+    public LongLat currentDestination;
+    private FeatureCollection noFlyZone;
+    private LongLat currPosition;
+    private boolean returningToStart = false;
     private int currentOrderIndex = 0;
-    private int currentLocationOrderIndex = 0;
-    private final List<Line2D> noFlyBoundaries;
+    private int currentLocationWithinOrderIndex = 0;
 
-
-    public Drone(LongLat startPosition, FeatureCollection noFlyZone, List<Order> orderLocations) {
+    public Drone(LongLat startPosition, FeatureCollection noFlyZone, List<Order> orders) {
         this.startPosition = startPosition;
-        this.currentPosition = startPosition;
-        this.returningToStart = false;
+        this.currPosition = startPosition;
         this.noFlyZone = noFlyZone;
-        this.orderLocations = orderLocations;
-        this.currentDestination = this.orderLocations.get(0).getAllLocations().get(0);
-        this.noFlyBoundaries = getNoFlyBoundaries();
-        flightpathData.add(Point.fromLngLat(currentPosition.longitude, currentPosition.latitude));
+        this.orders = orders;
+        this.currentDestination = this.orders.get(0).getAllLocations().get(0);
+        this.noFlyZoneBoundaries = getNoFlyZoneBoundaries();
+        flightpathData.add(Point.fromLngLat(currPosition.longitude, currPosition.latitude));
     }
 
     /*
-     * Move the drone to create a route of at most 150 moves, visiting all sensors (if possible).
+     * Move the drone to create a route of at most 1500 moves.
      */
     public void visitLocations() {
-        boolean continueFlight = true;
-        while (continueFlight) {
+        boolean inFlight = true;
+        while (inFlight) {
             LongLat destination = currentDestination;
-            int direction = this.currentPosition.getClosestAngleToDestination(destination);
-            moveDrone(direction);
+            int heading = this.currPosition.getClosestAngleToDestination(destination);
+            moveDrone(heading);
 
-            double distanceHome = currentPosition.distanceTo(startPosition);
-            if (distanceHome > (moves - 30) * LongLat.DRONE_MOVE_LENGTH) {
+            double distanceHome = currPosition.distanceTo(startPosition);
+            if (distanceHome > (movesRemaining - 30) * LongLat.DRONE_MOVE_LENGTH) {
                 returningToStart = true;
-                setCurrentDestination();
+                setCurrentDestinationToNextLocation();
             }
-            // Check the stopping conditions
-            if (this.moves == 0) {
-//                System.out.println("DEAD");
-                continueFlight = false;
-            }
-            if (currentPosition.closeTo(currentDestination) && returningToStart) {
-//                System.out.println("HOME");
-                continueFlight = false;
+            if (this.movesRemaining == 0 || (currPosition.closeTo(currentDestination) && returningToStart)) {
+                inFlight = false;
             }
         }
     }
 
-    private void setCurrentDestination() {
-        List<LongLat> currOrderLocations = orderLocations.get(currentOrderIndex).getAllLocations();
-        currentLocationOrderIndex++;
+    private void setCurrentDestinationToNextLocation() {
+        List<LongLat> currOrderLocations = orders.get(currentOrderIndex).getAllLocations();
+        currentLocationWithinOrderIndex++;
         if (returningToStart) {
             currentDestination = startPosition;
             return;
         }
 
-        if (this.currentLocationOrderIndex == currOrderLocations.size()) {
-            fulfilledOrders.add(orderLocations.get(currentOrderIndex));
+        if (this.currentLocationWithinOrderIndex == currOrderLocations.size()) {
+            fulfilledOrders.add(orders.get(currentOrderIndex));
             currentOrderIndex++;
-            currentLocationOrderIndex = 0;
-            if (this.currentOrderIndex == orderLocations.size()) {
+            currentLocationWithinOrderIndex = 0;
+            if (this.currentOrderIndex == orders.size()) {
                 currentOrderIndex--;
                 if (homeWhenDone) {
                     currentDestination = startPosition;
@@ -91,69 +78,39 @@ public class Drone {
                 returningToStart = true;
                 return;
             }
-            currOrderLocations = orderLocations.get(currentOrderIndex).getAllLocations();
+            currOrderLocations = orders.get(currentOrderIndex).getAllLocations();
         }
 
-        currentDestination = currOrderLocations.get(currentLocationOrderIndex);
+        currentDestination = currOrderLocations.get(currentLocationWithinOrderIndex);
     }
 
     /*
      * Move the drone, update its position and add the new position coordinate to route
      */
     private void moveDrone(int angle) {
-        LongLat proposedNextPosition = this.currentPosition.nextPosition(angle);
+        LongLat proposedNextPosition = this.currPosition.nextPosition(angle);
 
         // Check if the move involves flying through a No-Fly Zone
-        Move proposedMove = new Move(orderLocations.get(currentOrderIndex).getOrderNo(), angle, currentPosition, proposedNextPosition);
-//        if (route.size() > 0) {
-//            Move reversedLastMove = new Move(route.get(route.size() - 1));
-//            reversedLastMove.angle =  Math.floorMod(reversedLastMove.angle + 180, 360);
-//            if (reversedLastMove.getOrderNo().equals(proposedMove.getOrderNo()) && reversedLastMove.angle == proposedMove.angle) {
-//                moveDrone(getNewAngleAnticlockwise(route.get(route.size() - 1).angle - 10));
-//            }
-//        }
-
-        if (moveIntersectsNoFlyZone(proposedNextPosition, this.currentPosition) || !proposedNextPosition.isConfined()) {
-            angle = getNewAngleAnticlockwise(angle - 10);
-            moveDrone(angle - 10);
-            moveDrone(angle - 10);
-        }
-        // Check if the suggested move has been repeated within the last 5
-        else if (isRepeatedMove(proposedMove)) {
-            angle = getNewAngleAnticlockwise((angle - 20));
+        if (moveIntersectsNoFlyZone(proposedNextPosition, this.currPosition) || !proposedNextPosition.isConfined()) {
+            angle = getNewAngleAnticlockwise(angle);
             moveDrone(angle);
-//            moveDrone(angle);
-//            moveDrone(angle);
         }
         // The move is a legal move for the drone
         else {
-            String orderNo = orderLocations.get(currentOrderIndex).getOrderNo();
-            Move newMove = new Move(orderNo, angle, currentPosition, currentPosition.nextPosition(angle));
-            this.moves--;
-            this.currentPosition = proposedNextPosition;
+            String orderNo = orders.get(currentOrderIndex).getOrderNo();
+            Move newMove = new Move(orderNo, angle, currPosition, currPosition.nextPosition(angle));
+            this.movesRemaining--;
+            this.currPosition = proposedNextPosition;
             route.add(newMove);
-            flightpathData.add(Point.fromLngLat(currentPosition.longitude, currentPosition.latitude));
+            flightpathData.add(Point.fromLngLat(currPosition.longitude, currPosition.latitude));
             // Check if this new position is in range of a sensor and take reading if so
-            if (currentPosition.closeTo(currentDestination)) {
-                setCurrentDestination();
-                Move hoverMove = new Move(orderNo, LongLat.HOVERING_ANGLE, currentPosition, currentPosition);
-                this.moves--;
+            if (currPosition.closeTo(currentDestination)) {
+                setCurrentDestinationToNextLocation();
+                Move hoverMove = new Move(orderNo, LongLat.HOVERING_ANGLE, currPosition, currPosition);
+                this.movesRemaining--;
                 route.add(hoverMove);
             }
         }
-    }
-
-    /*
-     * Return true is the drone has already moved from point A to point B in the last 5 moves,
-     * false if not.
-     */
-    private boolean isRepeatedMove(Move move) {
-        if (this.route.size() > 5) {
-            List<Move> last5Moves = route.subList(route.size() - 5, route.size());
-            //                System.out.println("REPETITION");
-            return last5Moves.contains(move);
-        }
-        return false;
     }
 
     /*
@@ -170,7 +127,7 @@ public class Drone {
         Line2D moveLine = new Line2D.Double(initialPosition.getLongitude(), initialPosition.getLatitude(),
                 newPosition.getLongitude(), newPosition.getLatitude());
         // Loop through all boundaries of No-Fly Zones and check if the move intersects.
-        for (Line2D boundary : this.noFlyBoundaries) {
+        for (Line2D boundary : this.noFlyZoneBoundaries) {
             if (boundary.intersectsLine(moveLine)) {
                 return true;
             }
@@ -178,22 +135,58 @@ public class Drone {
         return false;
     }
 
-    private ArrayList<Line2D> getNoFlyBoundaries() {
+    private ArrayList<Line2D> getNoFlyZoneBoundaries() {
         ArrayList<Line2D> noFlyBoundaries = new ArrayList<>();
         // Get all features from the map, and break them down into all boundary lines.
         // Add the boundary lines to noFlyBoundaries.
         assert this.noFlyZone.features() != null;
-        for (var feature : this.noFlyZone.features()) {
-            var polygon = (Polygon) feature.geometry();
-            var coordinateLists = polygon.coordinates();
-            var coordinateList = coordinateLists.get(0);
-            for (int i = 0; i < coordinateList.size() - 1; i++) {
-                var pointA = coordinateList.get(i);
-                var pointB = coordinateList.get(i + 1);
-                var line = new Line2D.Double(pointA.longitude(), pointA.latitude(), pointB.longitude(), pointB.latitude());
+        FeatureCollection fc = FeatureCollection.fromFeatures(new ArrayList<>());
+        for (Feature feature : this.noFlyZone.features()) {
+            Polygon polygon = (Polygon) feature.geometry();
+            List<Point> pointList = polygon.coordinates().get(0);
+            List<Point> convexHullPoints = ConvexHull.getConvexHull(pointList);
+            fc.features().add(Feature.fromGeometry(Polygon.fromLngLats((Collections.singletonList(convexHullPoints)))));
+            for (int i = 0; i < convexHullPoints.size() - 1; i++) {
+                Point pointFrom = convexHullPoints.get(i);
+                Point pointTo = convexHullPoints.get(i + 1);
+                Line2D line = new Line2D.Double(pointFrom.longitude(), pointFrom.latitude(), pointTo.longitude(), pointTo.latitude());
                 noFlyBoundaries.add(line);
             }
         }
+        noFlyZone = fc;
         return noFlyBoundaries;
+    }
+
+    public void printStatistics() {
+        double moneyEarned = 0;
+        for (Order order : fulfilledOrders) {
+            moneyEarned += order.getDeliveryCost();
+        }
+        double potentialMoney = 0;
+        for (Order order : orders) {
+            potentialMoney += order.getDeliveryCost();
+        }
+
+        System.out.println("Deliveries Fulfilled: " + fulfilledOrders.size());
+        System.out.println("Total Deliveries: " + orders.size());
+        System.out.println("Percentage Delivery Completion: " + (fulfilledOrders.size() / (double) orders.size()));
+        System.out.println("Deliveries Fulfilled Value: " + moneyEarned);
+        System.out.println("Total Deliveries Value: " + potentialMoney);
+        System.out.println("Percentage Monetary Value: " + (moneyEarned / potentialMoney));
+        System.out.println("Moves Remaining: " + movesRemaining);
+    }
+
+    public void saveRouteGeoJson(String day, String month, String year) {
+        for (Order order : fulfilledOrders) {
+            noFlyZone.features().add(Feature.fromGeometry(Point.fromLngLat(order.getDeliverTo().longitude, order.getDeliverTo().latitude)));
+        }
+        noFlyZone.features().add(Feature.fromGeometry(LineString.fromLngLats(flightpathData)));
+
+        Path path = Paths.get("drone-" + day + '-' + month + '-' + year + ".geojson");
+        try {
+            Files.writeString(path, noFlyZone.toJson());
+        } catch (IOException ex) {
+            System.err.println("Error writing geojson to file");
+        }
     }
 }

@@ -3,7 +3,7 @@ package uk.ac.ed.inf.clients;
 import uk.ac.ed.inf.LongLat;
 import uk.ac.ed.inf.Menus;
 import uk.ac.ed.inf.Move;
-import uk.ac.ed.inf.entities.Order;
+import uk.ac.ed.inf.Order;
 
 import java.sql.*;
 import java.util.HashMap;
@@ -15,7 +15,7 @@ public class DatabaseClient {
     private final String machineName;
     private final String port;
 
-    private Connection conn;
+    private static Connection conn;
     private String jdbcString;
 
     public DatabaseClient(String machineName, String port) {
@@ -23,7 +23,7 @@ public class DatabaseClient {
         this.port = port;
         setJdbcString();
         try {
-            this.conn = DriverManager.getConnection(jdbcString);
+            conn = DriverManager.getConnection(jdbcString);
         } catch (SQLException e) {
             System.err.println("Can't create a connection to the database");
         }
@@ -60,43 +60,6 @@ public class DatabaseClient {
         }
 
         return orders;
-    }
-
-    private void initialiseDeliveriesTable() {
-        try {
-            Statement statement = conn.createStatement();
-            DatabaseMetaData databaseMetaData = conn.getMetaData();
-            ResultSet resultSet =
-                    databaseMetaData.getTables(null, null, "DELIVERIES", null);
-            if (resultSet.next()) {
-                statement.execute("drop table deliveries");
-            }
-            statement.execute("create table deliveries(orderNo char(8),\n" +
-                    "deliveredTo varchar(19),\n" +
-                    "costInPence int)\n");
-        } catch (SQLException e) {
-            System.err.println("Error initialising the deliveries table");
-        }
-    }
-
-    private void initialiseFlightPathTable() {
-        try {
-            Statement statement = conn.createStatement();
-            DatabaseMetaData databaseMetaData = conn.getMetaData();
-            ResultSet resultSet =
-                    databaseMetaData.getTables(null, null, "FLIGHTPATH", null);
-            if (resultSet.next()) {
-                statement.execute("drop table flightpath");
-            }
-            statement.execute("create table flightpath(orderNo char(8),\n" +
-                    "fromLongitude double,\n" +
-                    "fromLatitude double,\n" +
-                    "angle integer,\n" +
-                    "toLongitude double,\n" +
-                    "toLatitude double)\n");
-        } catch (SQLException e) {
-            System.err.println("Error initialising the flightpath table");
-        }
     }
 
     public void writeAllDeliveriesToTable(List<Order> fulfilledDeliveries) {
@@ -140,10 +103,44 @@ public class DatabaseClient {
         }
     }
 
-    // TODO: Write everything to databases
+    private void initialiseDeliveriesTable() {
+        try {
+            Statement statement = conn.createStatement();
+            DatabaseMetaData databaseMetaData = conn.getMetaData();
+            ResultSet resultSet =
+                    databaseMetaData.getTables(null, null, "DELIVERIES", null);
+            if (resultSet.next()) {
+                statement.execute("drop table deliveries");
+            }
+            statement.execute("create table deliveries(orderNo char(8),\n" +
+                    "deliveredTo varchar(19),\n" +
+                    "costInPence int)\n");
+        } catch (SQLException e) {
+            System.err.println("Error initialising the deliveries table");
+        }
+    }
+
+    private void initialiseFlightPathTable() {
+        try {
+            Statement statement = conn.createStatement();
+            DatabaseMetaData databaseMetaData = conn.getMetaData();
+            ResultSet resultSet =
+                    databaseMetaData.getTables(null, null, "FLIGHTPATH", null);
+            if (resultSet.next()) {
+                statement.execute("drop table flightpath");
+            }
+            statement.execute("create table flightpath(orderNo char(8),\n" +
+                    "fromLongitude double,\n" +
+                    "fromLatitude double,\n" +
+                    "angle integer,\n" +
+                    "toLongitude double,\n" +
+                    "toLatitude double)\n");
+        } catch (SQLException e) {
+            System.err.println("Error initialising the flightpath table");
+        }
+    }
 
     private void setJdbcString() {
         this.jdbcString = "jdbc:derby://" + machineName + ":" + port + DATABASE_NAME;
     }
-
 }

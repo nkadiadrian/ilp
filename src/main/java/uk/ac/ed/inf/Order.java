@@ -1,6 +1,4 @@
-package uk.ac.ed.inf.entities;
-
-import uk.ac.ed.inf.LongLat;
+package uk.ac.ed.inf;
 
 import java.util.ArrayList;
 import java.util.List;
