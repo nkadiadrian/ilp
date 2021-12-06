@@ -1,4 +1,4 @@
-package uk.ac.ed.inf.entities;
+package uk.ac.ed.inf.entities.web;
 
 
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * An entity class used by gson to serialise the list of shops from the json file on the website server
  */
-public class Shop { //TODO: PARSE THIS AS HASHMAP INSTEAD
+public class Shop {
     private final String name;
     private final String location;
     private final List<Item> menu;

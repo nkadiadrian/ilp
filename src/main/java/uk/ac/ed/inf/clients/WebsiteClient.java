@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.mapbox.geojson.FeatureCollection;
 import uk.ac.ed.inf.LongLat;
-import uk.ac.ed.inf.entities.Shop;
-import uk.ac.ed.inf.entities.ThreeWordsDetails;
+import uk.ac.ed.inf.entities.web.Shop;
+import uk.ac.ed.inf.entities.web.ThreeWordsDetails;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -24,7 +24,9 @@ import java.util.List;
 public class WebsiteClient {
     // The address of the file containing the list of shops with their respective menus
     public static final String SHOPS_MENUS_DIRECTORY = "/menus/menus.json";
-
+    public static final String NO_FLY_ZONES_DIRECTORY = "/buildings/no-fly-zones.geojson";
+    public static final String DETAILS_JSON_ADDRESS = "/details.json";
+    public static final String THREE_WORDS_DIRECTORY = "/words/";
     private static final HttpClient httpClient = HttpClient.newHttpClient();
     private static final Gson gson = new Gson();
     private String machineName;
@@ -80,7 +82,7 @@ public class WebsiteClient {
      * @return a list of all the shops and their menus available from the website.
      * An empty list is returned if no data is fetched.
      */
-    public List<Shop> getAllShopsMenus() { // TODO: Get this as hashmap instead
+    public List<Shop> getAllShopsMenus() {
         String response = GET(SHOPS_MENUS_DIRECTORY);
         Type shopsType = new TypeToken<List<Shop>>() {
         }.getType();
@@ -88,14 +90,14 @@ public class WebsiteClient {
     }
 
     public FeatureCollection getNoFlyZone() {
-        String response = GET("/buildings/no-fly-zones.geojson");
+        String response = GET(NO_FLY_ZONES_DIRECTORY);
         return FeatureCollection.fromJson(response);
     }
 
     public LongLat getLongLatFromLocationWord(String word) {
-        String wordDirectory = word.replace('.', '/');
-        String response = GET("/words/" + wordDirectory + "/details.json");
-        ThreeWordsDetails threeWordsDetails = gson.fromJson(response, ThreeWordsDetails.class);  // TODO: Fix Parsing
+        String wordsDirectory = word.replace('.', '/');
+        String response = GET(THREE_WORDS_DIRECTORY + wordsDirectory + DETAILS_JSON_ADDRESS);
+        ThreeWordsDetails threeWordsDetails = gson.fromJson(response, ThreeWordsDetails.class);
         return threeWordsDetails.getLongLat();
     }
 

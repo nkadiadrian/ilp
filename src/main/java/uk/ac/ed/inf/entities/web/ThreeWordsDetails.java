@@ -1,4 +1,4 @@
-package uk.ac.ed.inf.entities;
+package uk.ac.ed.inf.entities.web;
 
 import com.google.gson.annotations.SerializedName;
 import uk.ac.ed.inf.LongLat;

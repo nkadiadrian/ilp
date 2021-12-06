@@ -1,4 +1,4 @@
-package uk.ac.ed.inf.entities;
+package uk.ac.ed.inf.entities.web;
 
 /**
  * An entity class used by json to serialise the items in the menu of each shop from the json file on the website server

@@ -18,7 +18,9 @@ public class LongLat {
     public static final double APPLETON_TOWER_LONGITUDE = -3.186874;
     public static final double APPLETON_TOWER_LATITUDE = 55.944494;
     public static final LongLat APPLETON = new LongLat(LongLat.APPLETON_TOWER_LONGITUDE, LongLat.APPLETON_TOWER_LATITUDE);
-
+    public static final int MAX_BEARING = 360;
+    public static final int BEARING_MULTIPLE = 10;
+    public static final int MIN_BEARING = 0;
     /**
      * MINIMUM_LONGITUDE, MAXIMUM_LONGITUDE, MINIMUM_LATITUDE and MAXIMUM_LATITUDE
      * define the confinement area for the drone, outside of which the drone is considered
@@ -28,8 +30,7 @@ public class LongLat {
     private static final double MAXIMUM_LONGITUDE = -3.184319;
     private static final double MINIMUM_LATITUDE = 55.942617;
     private static final double MAXIMUM_LATITUDE = 55.946233;
-
-    @SerializedName("lng") // TODO: POSSIBLY REPLACE PARSER TO ELIMINATE COORDINATES CLAS
+    @SerializedName("lng")
     public double longitude;
     @SerializedName("lat")
     public double latitude;
@@ -97,7 +98,7 @@ public class LongLat {
         if (angle == HOVERING_ANGLE) {
             return new LongLat(this.longitude, this.latitude);
         } else {
-            assert (angle < 360 & angle >= 0 & angle % 10 == 0);
+            assert (angle < MAX_BEARING & angle >= MIN_BEARING & angle % BEARING_MULTIPLE == 0);
 
             double angleInRadians = Math.toRadians(angle);
             return new LongLat(this.longitude + (DRONE_MOVE_LENGTH * Math.cos(angleInRadians)), this.latitude + (DRONE_MOVE_LENGTH * Math.sin(angleInRadians)));
@@ -105,23 +106,13 @@ public class LongLat {
     }
 
     public int getClosestAngleToDestination(LongLat destination) {
-        double yDistance = destination.getLatitude() - this.latitude;
-        double xDistance = destination.getLongitude() - this.longitude;
-        double angleRadians = Math.atan(yDistance / xDistance);
+        double relativeNorth = destination.getLatitude() - this.latitude;
+        double relativeEast = destination.getLongitude() - this.longitude;
+        double angleRadians = Math.atan2(relativeNorth, relativeEast);
         double angleDegrees = Math.toDegrees(angleRadians);
-        double angleFromEast = 0.0;
-        // Calculate the angle anti-clockwise, with East = 0 degrees
-        if (xDistance > 0 && yDistance > 0) {
-            angleFromEast = angleDegrees;
-        } else if (xDistance < 0 && yDistance > 0) {
-            angleFromEast = 180 - Math.abs(angleDegrees);
-        } else if (xDistance < 0 && yDistance < 0) {
-            angleFromEast = 180 + angleDegrees;
-        } else if (xDistance > 0 && yDistance < 0) {
-            angleFromEast = 360 - (Math.abs(angleDegrees));
-        }
-        // Round the angle up or down to the corresponding multiple of 10
-        return (int) (10 * (Math.round(angleFromEast / 10)));
+        double bearing = (angleDegrees + MAX_BEARING) % MAX_BEARING;
+
+        return (int) (BEARING_MULTIPLE * (Math.round(bearing / BEARING_MULTIPLE)));
     }
 
     public double getLongitude() {

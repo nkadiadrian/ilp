@@ -2,6 +2,11 @@ package uk.ac.ed.inf;
 
 import com.mapbox.geojson.FeatureCollection;
 import uk.ac.ed.inf.clients.DatabaseClient;
+import uk.ac.ed.inf.entities.db.Order;
+import uk.ac.ed.inf.optimisers.Optimiser;
+import uk.ac.ed.inf.optimisers.heuristics.GreedyHeuristic;
+import uk.ac.ed.inf.optimisers.heuristics.SwapHeuristic;
+import uk.ac.ed.inf.optimisers.heuristics.TwoOptHeuristic;
 
 import java.sql.Date;
 import java.util.HashMap;
@@ -31,16 +36,16 @@ public class App {
         FeatureCollection noFlyZone = Menus.getWebsiteClient().getNoFlyZone();
         LongLat startPosition = LongLat.APPLETON;
         Optimiser optimiser = new Optimiser(orders, noFlyZone);
-        optimiser.useGreedy();
-//        optimiser.useSwapHeuristic(-1);
-//        optimiser.useTwoOptHeuristic(-1);
+        optimiser.useHeuristic(new GreedyHeuristic());
+        optimiser.useHeuristic(new SwapHeuristic());
+        optimiser.useHeuristic(new TwoOptHeuristic());
         List<Order> destinations = optimiser.getOptimisedOrderList();
 
         Drone drone = new Drone(startPosition, noFlyZone, destinations);
         drone.visitLocations();
         drone.saveRouteGeoJson(day, month, year);
-        databaseClient.writeAllDeliveriesToTable(drone.fulfilledOrders);
-        databaseClient.writeAllMovesToTable(drone.route);
+        databaseClient.writeAllDeliveriesToTable(drone.getFulfilledOrders());
+        databaseClient.writeAllMovesToTable(drone.getRoute());
 
         drone.printStatistics();
     }

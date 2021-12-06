@@ -1,6 +1,10 @@
-package uk.ac.ed.inf;
+package uk.ac.ed.inf.optimisers;
 
 import com.mapbox.geojson.FeatureCollection;
+import uk.ac.ed.inf.Drone;
+import uk.ac.ed.inf.LongLat;
+import uk.ac.ed.inf.entities.db.Order;
+import uk.ac.ed.inf.optimisers.heuristics.Heuristic;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,7 +13,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Optimiser {
-    private final List<List<Double>> distanceMatrix = new ArrayList<>();
+    public static final int ASSUMED_GOING_HOME_COST = 10;
+    public final List<List<Double>> distanceMatrix = new ArrayList<>();
     private final List<List<Boolean>> firstPickUpMatrix = new ArrayList<>();
     private final List<Order> orders;
     private final FeatureCollection noFlyZone;
@@ -37,27 +42,17 @@ public class Optimiser {
         return optimisedOrders;
     }
 
-    public void useGreedy() {
-        List<Integer> visitedIndices = new ArrayList<>();
-        int currentindex = 0;
-        visitedIndices.add(currentindex);
-
-        while (visitedIndices.size() <= orders.size()) {
-            List<Double> distanceRow = distanceMatrix.get(currentindex);
-            double minDist = Double.POSITIVE_INFINITY;
-            int nextMove = 0;
-
-            for (int i = 1; i < distanceRow.size(); i++) {
-                if (distanceRow.get(i) < minDist & !visitedIndices.contains(i) & i != currentindex) {
-                    minDist = distanceRow.get(i);
-                    nextMove = i;
-                }
-            }
-            visitedIndices.add(nextMove);
-            currentindex = nextMove;
+    public double getTourValue() {
+        double tourCost = 0;
+        for (int i = 0; i < visitOrder.size() - 1; i++) {
+            tourCost += distanceMatrix.get(visitOrder.get(i)).get(visitOrder.get(i + 1));
         }
+        tourCost += distanceMatrix.get(visitOrder.size() - 1).get(0);
+        return tourCost;
+    }
 
-        visitOrder = visitedIndices;
+    public void useHeuristic(Heuristic heuristic) {
+        visitOrder = heuristic.applyHeuristic(this);
     }
 
     private void initialiseVisitOrders() {
@@ -70,7 +65,7 @@ public class Optimiser {
     private void initialiseMatrices() {
         List<Order> matrixOrders = new ArrayList<>(this.orders);
         Order tempHomeOrder = new Order(LongLat.APPLETON, Collections.singletonList(LongLat.APPLETON));
-        tempHomeOrder.setDeliveryCost(10);
+        tempHomeOrder.setDeliveryCost(ASSUMED_GOING_HOME_COST);
         matrixOrders.add(0, tempHomeOrder);
 
         for (LongLat deliverFrom : matrixOrders.stream().map(Order::getDeliverTo).collect(Collectors.toList())) {
@@ -96,10 +91,9 @@ public class Optimiser {
     private double calcDistanceFirstShopFirst(LongLat fromLocation, Order toOrder) {
         List<Order> order = Collections.singletonList(toOrder);
 
-        Drone drone = new Drone(fromLocation, noFlyZone, order);
-        drone.homeWhenDone = false;
+        Drone drone = new Drone(fromLocation, noFlyZone, order, false);
         drone.visitLocations();
-        return 1500 - drone.movesRemaining;
+        return Drone.MOVES_ALLOWED - drone.getMovesRemaining();
     }
 
     private double calcDistanceLastShopFirst(LongLat fromLocation, Order toOrder) {
@@ -108,12 +102,10 @@ public class Optimiser {
         Order reversedOrder = new Order(fromLocation, shopLocations);
         List<Order> order = Collections.singletonList(reversedOrder);
 
-        Drone drone = new Drone(fromLocation, noFlyZone, order);
-        drone.homeWhenDone = false;
+        Drone drone = new Drone(fromLocation, noFlyZone, order, false);
         drone.visitLocations();
-        return 1500 - drone.movesRemaining;
+        return Drone.MOVES_ALLOWED - drone.getMovesRemaining();
     }
-
 //    private double calcDistanceFirstShopFirst(LongLat fromLocation, Order toOrder) {
 //        double distance = 0;
 //        List<LongLat> shopList = toOrder.getShopLocations();
@@ -136,67 +128,6 @@ public class Optimiser {
 //        distance += lastShop.distanceTo(firstShop);
 //        distance += firstShop.distanceTo(toOrder.getDeliverTo());
 //        return distance;
+
 //    }
-
-    private double getTourValue() {
-        double tourCost = 0;
-        for (int i = 0; i < visitOrder.size() - 1; i++) {
-            tourCost += distanceMatrix.get(visitOrder.get(i)).get(visitOrder.get(i + 1));
-        }
-        tourCost += distanceMatrix.get(visitOrder.size() - 1).get(0);
-        return tourCost;
-    }
-
-    private boolean trySwap(int i) {
-        double oldCost = getTourValue();
-        int j = (i + 1);
-        Collections.swap(visitOrder, i, j);
-        if (getTourValue() < oldCost) {
-            return true;
-        } else {
-            Collections.swap(visitOrder, i, j);
-            return false;
-        }
-    }
-
-    private boolean tryReverse(int i, int j) {
-        double oldCost = getTourValue();
-        Collections.reverse(visitOrder.subList(i, j));
-        if (getTourValue() < oldCost) {
-            return true;
-        } else {
-            Collections.reverse(visitOrder.subList(i, j));
-            return false;
-        }
-    }
-
-    public void useSwapHeuristic(int k) {
-        boolean better = true;
-        int count = 0;
-        while (better && (count < k || k == -1)) {
-            better = false;
-            count += 1;
-            for (int i = 1; i < visitOrder.size() - 1; i++) {
-                if (trySwap(i)) {
-                    better = true;
-                }
-            }
-        }
-    }
-
-    public void useTwoOptHeuristic(int k) {
-        boolean better = true;
-        int count = 0;
-        while (better && (count < k || k == -1)) {
-            better = false;
-            count += 1;
-            for (int j = 1; j < visitOrder.size(); j++) {
-                for (int i = 1; i < j; i++) {
-                    if (tryReverse(i, j)) {
-                        better = true;
-                    }
-                }
-            }
-        }
-    }
 }

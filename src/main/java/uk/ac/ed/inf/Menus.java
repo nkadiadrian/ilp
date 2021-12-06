@@ -1,8 +1,8 @@
 package uk.ac.ed.inf;
 
 import uk.ac.ed.inf.clients.WebsiteClient;
-import uk.ac.ed.inf.entities.Item;
-import uk.ac.ed.inf.entities.Shop;
+import uk.ac.ed.inf.entities.web.Item;
+import uk.ac.ed.inf.entities.web.Shop;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +15,6 @@ public class Menus {
     public static final int DELIVERY_CHARGE = 50;
     private static WebsiteClient websiteClient;
     private final Map<String, Item> itemMap;
-
 
     /**
      * The constructor for the class initialises the websiteClient using the parameters provided
