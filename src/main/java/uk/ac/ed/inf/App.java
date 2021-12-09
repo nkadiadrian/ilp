@@ -9,6 +9,7 @@ import uk.ac.ed.inf.optimisers.heuristics.SwapHeuristic;
 import uk.ac.ed.inf.optimisers.heuristics.TwoOptHeuristic;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -40,6 +41,7 @@ public class App {
         optimiser.useHeuristic(new SwapHeuristic());
         optimiser.useHeuristic(new TwoOptHeuristic());
         List<Order> destinations = optimiser.getOptimisedOrderList();
+//        List<Order> destinations = new ArrayList<>(orders.values());
 
         Drone drone = new Drone(startPosition, noFlyZone, destinations);
         drone.visitLocations();
@@ -47,6 +49,7 @@ public class App {
         databaseClient.writeAllDeliveriesToTable(drone.getFulfilledOrders());
         databaseClient.writeAllMovesToTable(drone.getRoute());
 
-        drone.printStatistics();
+//        drone.printStatistics();
+        drone.printSimpleStatistics();
     }
 }

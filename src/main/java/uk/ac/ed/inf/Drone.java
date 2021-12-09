@@ -14,7 +14,7 @@ import java.util.List;
 
 public class Drone {
     public static final int MOVES_ALLOWED = 1500;
-    public static final int RETURN_HOME_SAFETY_BUFFER = 30;
+    public static final int RETURN_HOME_SAFETY_BUFFER = 40;
     public static final int ZONE_AVOIDANCE_STEP = 10;
     private final List<Line2D> noFlyZoneBoundaries;
     private final LongLat startPosition;
@@ -30,6 +30,7 @@ public class Drone {
     private boolean returningToStart = false;
     private int currOrderIndex = 0;
     private int currLocationWithinOrderIndex = 0;
+    private List<Point> convexHullPoints;
 
     public Drone(LongLat startPosition, FeatureCollection noFlyZone, List<Order> orders) {
         this.startPosition = startPosition;
@@ -54,7 +55,7 @@ public class Drone {
         while (inFlight) {
             LongLat destination = currDestination;
             int heading = this.currPosition.getClosestAngleToDestination(destination);
-            moveDrone(heading);
+            moveDrone(heading, 0, heading);
 
             double distanceHome = currPosition.distanceTo(startPosition);
             if (distanceHome > (movesRemaining - RETURN_HOME_SAFETY_BUFFER) * LongLat.DRONE_MOVE_LENGTH) {
@@ -95,14 +96,46 @@ public class Drone {
     /*
      * Move the drone, update its position and add the new position coordinate to route
      */
-    private void moveDrone(int angle) {
+    private void moveDrone(int angle, int iter, int orig) {
+        iter++;
+//        double distanceHome = currPosition.distanceTo(startPosition);
+//        if (movesRemaining <= 0) return;
+//        if (distanceHome > (movesRemaining - RETURN_HOME_SAFETY_BUFFER) * LongLat.DRONE_MOVE_LENGTH && !returningToStart) {
+//            returningToStart = true;
+//            currDestination = getNextLocation();
+//            return;
+//        }
         LongLat proposedNextPosition = this.currPosition.nextPosition(angle);
+        Move proposedMove = new Move(orders.get(currOrderIndex).getOrderNo(), angle, currPosition, proposedNextPosition);
+        if (route.size() > 0) {
+            Move lastMove = new Move(route.get(route.size() - 1));
+            int reversedLastAngle =  Math.floorMod(lastMove.angle + 180, 360);
+            if (reversedLastAngle == proposedMove.angle) {
+                moveDrone((lastMove.angle), 0, (lastMove.angle));
+//                moveDrone((lastMove.angle), 0, (lastMove.angle));
+//                moveDrone((lastMove.angle), 0, (lastMove.angle));
+                return;
+            }
+        }
 
         // Check if the move involves flying through a No-Fly Zone
         if (moveIntersectsNoFlyZone(proposedNextPosition, this.currPosition) || !proposedNextPosition.isConfined()) {
+//            System.out.println(currPosition);
             angle = getNextCcwAngle(angle);
-            moveDrone(angle);
+//            if (iter % 2 == 0) {
+//                angle = Math.floorMod(orig - ((iter / 2) * 10), 360);
+//            } else {
+//                angle = Math.floorMod(orig + ((iter / 2) * 10), 360);
+//            }
+//            saveRouteGeoJson();
+            moveDrone(angle, iter, orig);
         }
+//        if (isRepeatedMove(proposedMove)) {
+//            angle = getNextCcwAngle((angle - 40));
+//            moveDrone(angle);
+//            moveDrone(angle);
+//            moveDrone(angle);
+//        }
         // The move is a legal move for the drone
         else {
             String orderNo = orders.get(currOrderIndex).getOrderNo();
@@ -119,6 +152,15 @@ public class Drone {
                 this.movesRemaining--;
             }
         }
+    }
+
+    private boolean isRepeatedMove(Move move) {
+        if (this.route.size() > 5) {
+            List<Move> last5Moves = route.subList(route.size() - 5, route.size());
+            //                System.out.println("REPETITION");
+            return last5Moves.contains(move);
+        }
+        return false;
     }
 
     /*
@@ -148,27 +190,74 @@ public class Drone {
         // Get all features from the map, and break them down into all boundary lines.
         // Add the boundary lines to noFlyBoundaries.
         assert this.noFlyZone.features() != null;
+        List<List<Point>> pointLists = new ArrayList<>();
         for (Feature feature : this.noFlyZone.features()) {
             Polygon polygon = (Polygon) feature.geometry();
             assert polygon != null;
             List<Point> pointList = polygon.coordinates().get(0);
-            List<Point> convexHullPoints = ConvexHull.getConvexHull(pointList);
-            for (int i = 0; i < convexHullPoints.size() - 1; i++) {
-                Point pointFrom = convexHullPoints.get(i);
-                Point pointTo = convexHullPoints.get(i + 1);
+            pointLists.add(pointList);
+            for (int i = 0; i < pointList.size() - 1; i++) {
+                Point pointFrom = pointList.get(i);
+                Point pointTo = pointList.get(i + 1);
                 Line2D line = new Line2D.Double(pointFrom.longitude(), pointFrom.latitude(), pointTo.longitude(), pointTo.latitude());
                 noFlyBoundaries.add(line);
             }
         }
+        List<Point> aggregatedPointList = aggregatePointLists(pointLists);
+        convexHullPoints = aggregatedPointList;
+        convexHullPoints = ConvexHull.getConvexHull(aggregatedPointList);
+        List<Point> convexG = ConvexHull.getConvexHull(aggregatedPointList);
+        for (int i = 0; i < convexG.size() - 1; i++) {
+            Point pointFrom = convexG.get(i);
+            Point pointTo = convexG.get(i + 1);
+            Line2D line = new Line2D.Double(pointFrom.longitude(), pointFrom.latitude(), pointTo.longitude(), pointTo.latitude());
+            noFlyBoundaries.add(line);
+        }
+        saveRouteGeoJson();
         return noFlyBoundaries;
     }
 
+    private List<Point> aggregatePointLists(List<List<Point>> pointLists) {
+        List<Point> aggregateList = ConvexHull.getConvexHull(pointLists.get(0));
+        for (int i = 1; i < 5; i++) {
+            int closestPointMainIndex = 0;
+            int closestPointIndex = 0;
+            double minDist = Double.POSITIVE_INFINITY;
+            List<Point> pointList = ConvexHull.getConvexHull(pointLists.get(i));
+            for (int j = 0; j < pointList.size() - 1; j++) {
+                LongLat point = new LongLat(pointList.get(j));
+                for (int k = 0; k < aggregateList.size(); k++) {
+                    LongLat mainPoint = new LongLat(aggregateList.get(k));
+                    double distance = point.distanceTo(mainPoint);
+                    if (distance < minDist) {
+                        minDist = distance;
+                        closestPointIndex = j;
+                        closestPointMainIndex = k;
+                    }
+                }
+            }
+
+            List<Point> newHull = pointList.subList(closestPointIndex, pointList.size() - 1);
+            newHull.addAll(pointList.subList(0, closestPointIndex));
+//            System.out.println("OHHHHH");
+//            System.out.println("New Hull size: " + newHull.size());
+//            System.out.println("Aggregate list Orig size: " + aggregateList.size());
+            aggregateList.addAll(closestPointMainIndex, newHull);
+//            System.out.println("Aggregate list Next Size: " + aggregateList.size());
+//            aggregateList = ConvexHull.getConvexHull(newHull);
+//            System.out.println("Aggregate list Convexed Size: " + aggregateList.size());
+//            System.out.println("Shape num: " + i);
+        }
+
+        return aggregateList;
+    }
+
     public void printStatistics() {
-        double moneyEarned = 0;
+        int moneyEarned = 0;
         for (Order order : fulfilledOrders) {
             moneyEarned += order.getDeliveryCost();
         }
-        double potentialMoney = 0;
+        int potentialMoney = 0;
         for (Order order : orders) {
             potentialMoney += order.getDeliveryCost();
         }
@@ -178,17 +267,43 @@ public class Drone {
         System.out.println("Percentage Delivery Completion: " + (fulfilledOrders.size() / (double) orders.size()));
         System.out.println("Deliveries Fulfilled Value: " + moneyEarned);
         System.out.println("Total Deliveries Value: " + potentialMoney);
-        System.out.println("Percentage Monetary Value: " + (moneyEarned / potentialMoney));
+        System.out.println("Percentage Monetary Value: " + (moneyEarned / (double) potentialMoney));
         System.out.println("Moves Remaining: " + movesRemaining);
+    }
+
+    public void printSimpleStatistics() {
+        int moneyEarned = 0;
+        for (Order order : fulfilledOrders) {
+            moneyEarned += order.getDeliveryCost();
+        }
+        int potentialMoney = 0;
+        for (Order order : orders) {
+            potentialMoney += order.getDeliveryCost();
+        }
+
+        System.out.println(fulfilledOrders.size());
+        System.out.println(orders.size());
+        System.out.println((fulfilledOrders.size() / (double) orders.size()));
+        System.out.println(moneyEarned);
+        System.out.println(potentialMoney);
+        System.out.println((moneyEarned / (double) potentialMoney));
+        System.out.println(movesRemaining);
+    }
+
+    public void saveRouteGeoJson() {
+        saveRouteGeoJson("test", "test", "test");
     }
 
     public void saveRouteGeoJson(String day, String month, String year) {
         assert noFlyZone.features() != null;
-        noFlyZone.features().add(Feature.fromGeometry(LineString.fromLngLats(flightpathData)));
+        FeatureCollection outputMap = FeatureCollection.fromFeatures(new ArrayList<>());
+        outputMap.features().addAll(noFlyZone.features());
+        outputMap.features().add(Feature.fromGeometry(LineString.fromLngLats(flightpathData)));
+        outputMap.features().add(Feature.fromGeometry(LineString.fromLngLats(convexHullPoints)));
 
         Path path = Paths.get("drone-" + day + '-' + month + '-' + year + ".geojson");
         try {
-            Files.writeString(path, noFlyZone.toJson());
+            Files.writeString(path, outputMap.toJson());
         } catch (IOException ex) {
             System.err.println("Error writing geojson to file");
         }

@@ -1,6 +1,9 @@
 package uk.ac.ed.inf;
 
 import com.google.gson.annotations.SerializedName;
+import com.mapbox.geojson.Point;
+
+import java.awt.geom.Point2D;
 
 /**
  * Class to represent the location of the drone
@@ -42,6 +45,18 @@ public class LongLat {
     public LongLat(double longitude, double latitude) {
         this.longitude = longitude;
         this.latitude = latitude;
+    }
+
+
+    public LongLat(Point2D point) {
+        this.longitude = point.getX();
+        this.latitude = point.getY();
+    }
+
+
+    public LongLat(Point point) {
+        this.longitude = point.longitude();
+        this.latitude = point.latitude();
     }
 
     /**
@@ -133,9 +148,6 @@ public class LongLat {
 
     @Override
     public String toString() {
-        return "LongLat{" +
-                "longitude=" + longitude +
-                ", latitude=" + latitude +
-                '}';
+        return latitude + ", " + longitude;
     }
 }
