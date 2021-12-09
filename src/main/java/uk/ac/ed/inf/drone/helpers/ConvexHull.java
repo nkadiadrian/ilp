@@ -1,11 +1,7 @@
-package uk.ac.ed.inf;
+package uk.ac.ed.inf.drone.helpers;
 
 import com.mapbox.geojson.Point;
 
-import java.awt.*;
-import java.awt.geom.Line2D;
-import java.awt.geom.Path2D;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,26 +32,6 @@ public class ConvexHull {
 
         convexHull.add(convexHull.get(0));
         return convexHull;
-    }
-
-    private static boolean isInside(Point fromPoint, Point anglePoint, List<Point> hull) {
-        Point2D fromAnglePoint = new Point2D.Double(fromPoint.longitude(), fromPoint.latitude());
-        Point2D toAnglePoint = new Point2D.Double(anglePoint.longitude(), anglePoint.latitude());
-        Line2D toAngleLine = new Line2D.Double(fromAnglePoint, toAnglePoint);
-
-        for (int i = 0; i < hull.size() - 1;) {
-            Point2D from = new Point2D.Double(hull.get(i).longitude(), hull.get(i).latitude());
-            Point2D to = new Point2D.Double(hull.get(i + 1).longitude(), hull.get(i + 1).latitude());
-            Line2D boundary = new Line2D.Double(from, to);
-            if (!fromAnglePoint.equals(toAngleLine.getP1())) {
-                if (!toAnglePoint.equals(toAngleLine.getP2())) {
-                    if (boundary.intersectsLine(toAngleLine)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     private static boolean counterClockwiseTurn(Point a, Point b, Point c) {

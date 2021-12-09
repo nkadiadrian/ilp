@@ -1,8 +1,8 @@
 package uk.ac.ed.inf.optimisers;
 
 import com.mapbox.geojson.FeatureCollection;
-import uk.ac.ed.inf.Drone;
 import uk.ac.ed.inf.LongLat;
+import uk.ac.ed.inf.drone.Drone;
 import uk.ac.ed.inf.entities.db.Order;
 import uk.ac.ed.inf.optimisers.heuristics.Heuristic;
 
@@ -92,7 +92,7 @@ public class Optimiser {
         List<Order> order = Collections.singletonList(toOrder);
 
         Drone drone = new Drone(fromLocation, noFlyZone, order, false);
-        drone.visitLocations();
+        drone.deliver();
         return Drone.MOVES_ALLOWED - drone.getMovesRemaining();
     }
 
@@ -103,31 +103,7 @@ public class Optimiser {
         List<Order> order = Collections.singletonList(reversedOrder);
 
         Drone drone = new Drone(fromLocation, noFlyZone, order, false);
-        drone.visitLocations();
+        drone.deliver();
         return Drone.MOVES_ALLOWED - drone.getMovesRemaining();
     }
-//    private double calcDistanceFirstShopFirst(LongLat fromLocation, Order toOrder) {
-//        double distance = 0;
-//        List<LongLat> shopList = toOrder.getShopLocations();
-//        LongLat firstShop = shopList.get(0);
-//        LongLat lastShop = shopList.get(shopList.size() - 1);
-//
-//        distance += fromLocation.distanceTo(firstShop);
-//        distance += firstShop.distanceTo(lastShop);
-//        distance += lastShop.distanceTo(toOrder.getDeliverTo());
-//        return distance;
-//    }
-//
-//    private double calcDistanceLastShopFirst(LongLat fromLocation, Order toOrder) {
-//        double distance = 0;
-//        List<LongLat> shopList = toOrder.getShopLocations();
-//        LongLat firstShop = shopList.get(0);
-//        LongLat lastShop = shopList.get(shopList.size() - 1);
-//
-//        distance += fromLocation.distanceTo(lastShop);
-//        distance += lastShop.distanceTo(firstShop);
-//        distance += firstShop.distanceTo(toOrder.getDeliverTo());
-//        return distance;
-
-//    }
 }

@@ -21,15 +21,6 @@ public class Move {
         this.toLatitude = toLocation.getLatitude();
     }
 
-    public Move(Move move) {
-        this.orderNo = move.orderNo;
-        this.fromLongitude = move.fromLongitude;
-        this.fromLatitude = move.fromLatitude;
-        this.angle = move.angle;
-        this.toLongitude = move.toLongitude;
-        this.toLatitude = move.toLatitude;
-    }
-
     public String getOrderNo() {
         return orderNo;
     }
