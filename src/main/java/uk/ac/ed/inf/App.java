@@ -6,9 +6,11 @@ import uk.ac.ed.inf.drone.Drone;
 import uk.ac.ed.inf.drone.helpers.OutputUtils;
 import uk.ac.ed.inf.entities.db.Order;
 import uk.ac.ed.inf.optimisers.Optimiser;
+import uk.ac.ed.inf.optimisers.heuristics.GreedyHeuristic;
+import uk.ac.ed.inf.optimisers.heuristics.SwapHeuristic;
+import uk.ac.ed.inf.optimisers.heuristics.TwoOptHeuristic;
 
 import java.sql.Date;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -16,7 +18,7 @@ import java.util.List;
  * Hello world!
  */
 public class App {
-
+    public static final String TEST_MODE = "1";
 
     public static void main(String[] args) {
         String day = args[0];
@@ -36,11 +38,10 @@ public class App {
         FeatureCollection noFlyZone = Menus.getWebsiteClient().getNoFlyZone();
         LongLat startPosition = LongLat.APPLETON;
         Optimiser optimiser = new Optimiser(orders, noFlyZone);
-//        optimiser.useHeuristic(new GreedyHeuristic());
+        optimiser.useHeuristic(new GreedyHeuristic());
 //        optimiser.useHeuristic(new SwapHeuristic());
 //        optimiser.useHeuristic(new TwoOptHeuristic());
-//        List<Order> destinations = optimiser.getOptimisedOrderList();
-        List<Order> destinations = new ArrayList<>(orders.values());
+        List<Order> destinations = optimiser.getOptimisedOrderList();
 
         Drone drone = new Drone(startPosition, noFlyZone, destinations);
         drone.deliver();
@@ -48,7 +49,11 @@ public class App {
         databaseClient.writeAllDeliveriesToTable(drone.getFulfilledOrders());
         databaseClient.writeAllMovesToTable(drone.getFlightPathData());
 
-//        OutputUtils.printStatistics(drone);
-        OutputUtils.printSimpleStatistics(drone);
+
+        if (args.length > 5 && args[5].equals(TEST_MODE)) {
+            OutputUtils.printSimpleStatistics(drone);
+        } else {
+            OutputUtils.printStatistics(drone);
+        }
     }
 }
